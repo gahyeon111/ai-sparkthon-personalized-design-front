@@ -6,13 +6,17 @@ import ProgressSteps from "./ProgressSteps";
 import CampaignInfo from "./CampaignInfo";
 import ChannelInfo from "./ChannelInfo";
 import PresetCombinations from "./PresetCombinations";
+import RecommendedCopies from "./RecommendedCopies";
 import ImageGrid from "./ImageGrid";
 import ChatMessage from "./ChatMessage";
 import ChatInput, { type AttachedImage } from "./ChatInput";
+import ResizableChatLayout from "./ResizableChatLayout";
 import {
   createChatSession,
+  getCopyRecommendations,
   sendMessage,
   getImageStatus,
+  resolveImageUrl,
 } from "@/lib/api";
 import {
   chatStepToProgressIndex,
@@ -21,6 +25,7 @@ import {
   type ChannelType,
   type GeneratedImage,
   type Preset,
+  type RecommendedCopy,
 } from "@/lib/types";
 
 interface DisplayMessage {
@@ -51,14 +56,19 @@ export default function GeneratePage() {
   const [campaignId, setCampaignId] = useState<string | null>(null);
   const [channel, setChannel] = useState<ChannelType | null>(null);
   const [presetCombinations, setPresetCombinations] = useState<Preset[]>([]);
+  const [recommendedCopies, setRecommendedCopies] = useState<RecommendedCopy[]>([]);
+  const [isCopyLoading, setIsCopyLoading] = useState(false);
   const [campaignStatus, setCampaignStatus] = useState<string>("draft");
   const [generationProgress, setGenerationProgress] = useState({ completed: 0, total: 0 });
 
   // 이미지
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
-  const canSelectImage = step === "generating" || step === "edit";
+  // 이미지 선택·편집은 모든 이미지가 완전히 완료된 이후에만 가능
+  const canSelectImage = campaignStatus === "done";
   const activeSelectedImageId = canSelectImage ? selectedImageId : null;
+
+  const [editPollTs, setEditPollTs] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -86,36 +96,54 @@ export default function GeneratePage() {
     })();
   }, []);
 
-  // 이미지 생성 폴링
+  // 이미지 생성 폴링 — 각 이미지가 완료될 때마다 즉시 표시, 전체 완료 시 편집 활성화
   useEffect(() => {
     if (!campaignId) return;
 
+    const POLL_TIMEOUT_MS = 10 * 60 * 1000; // 10분 안전 타임아웃
+    const startedAt = Date.now();
+
+    const stop = (newStatus?: string) => {
+      clearInterval(pollRef.current!);
+      pollRef.current = null;
+      if (newStatus) setCampaignStatus(newStatus);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === "img-done")) return prev;
+        return [
+          ...prev,
+          {
+            id: "img-done",
+            role: "assistant",
+            content:
+              newStatus === "failed"
+                ? "일부 이미지 생성에 실패했습니다. 완료된 이미지를 확인해 주세요."
+                : "이미지 생성이 완료되었습니다! 이미지를 선택해서 수정하거나, 검수하기를 눌러주세요.",
+            showFinalizeButton: newStatus !== "failed",
+          },
+        ];
+      });
+    };
+
     const poll = async () => {
+      // 안전 타임아웃
+      if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+        stop("failed");
+        return;
+      }
       try {
         const status = await getImageStatus(campaignId);
         setCampaignStatus(status.campaign_status);
         setGenerationProgress({ completed: status.completed, total: status.total });
-        setImages(status.images);
-        const done =
-          status.campaign_status === "done" ||
-          (status.total > 0 && status.completed === status.total);
-        if (done) {
-          clearInterval(pollRef.current!);
-          pollRef.current = null;
-          // 이미지 생성 완료 시 검수하기 버튼 메시지 삽입 (중복 방지)
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === "img-done")) return prev;
-            return [
-              ...prev,
-              {
-                id: "img-done",
-                role: "assistant",
-                content:
-                  "이미지 생성이 완료되었습니다! 이미지를 선택해서 수정하거나, 검수하기를 눌러주세요.",
-                showFinalizeButton: true,
-              },
-            ];
-          });
+        // 완료된 이미지부터 즉시 반영
+        setImages(
+          status.images.map((img) => ({
+            ...img,
+            image_url: img.image_url ? resolveImageUrl(img.image_url) : img.image_url,
+          }))
+        );
+
+        if (status.campaign_status === "done" || status.campaign_status === "failed") {
+          stop(status.campaign_status);
         }
       } catch (e) {
         console.error("이미지 상태 조회 실패", e);
@@ -128,6 +156,60 @@ export default function GeneratePage() {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [campaignId]);
+
+  // 편집 완료 폴링 — edit_started 플래그가 세팅되면 3초마다 이미지 상태를 새로고침
+  useEffect(() => {
+    if (!editPollTs || !campaignId) return;
+    const TIMEOUT = 5 * 60 * 1000;
+    const startedAt = Date.now();
+    const poll = async () => {
+      if (Date.now() - startedAt > TIMEOUT) return;
+      try {
+        const status = await getImageStatus(campaignId);
+        setImages(
+          status.images.map((img) => ({
+            ...img,
+            image_url: img.image_url ? resolveImageUrl(img.image_url) : img.image_url,
+          }))
+        );
+      } catch {}
+    };
+    poll();
+    const interval = setInterval(poll, 3000);
+    return () => clearInterval(interval);
+  }, [editPollTs, campaignId]);
+
+  useEffect(() => {
+    if (!campaignText || presetCombinations.length === 0) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        setIsCopyLoading(true);
+        const response = await getCopyRecommendations({
+          campaign_text: campaignText,
+          confirmed_presets: presetCombinations,
+        });
+        if (!cancelled) {
+          setRecommendedCopies(response.items);
+        }
+      } catch (error) {
+        console.error("추천 문구 생성 실패", error);
+        if (!cancelled) {
+          setRecommendedCopies([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsCopyLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [campaignText, presetCombinations]);
 
   // 채팅 메시지 전송
   const handleSend = useCallback(
@@ -184,8 +266,14 @@ export default function GeneratePage() {
         });
 
         setStep(res.step);
+        if (res.edit_started) {
+          setEditPollTs(Date.now());
+        }
         if (res.campaign_id) setCampaignId((prev) => prev ?? res.campaign_id ?? null);
-        if (res.presets?.length) setPresetCombinations(res.presets);
+        if (res.presets?.length) {
+          setPresetCombinations(res.presets);
+          setRecommendedCopies([]);
+        }
 
         // 수정 단계 응답에만 검수하기 버튼 표시 (generating 초기 메시지에는 미표시)
         const showReviewButton = res.step === "edit";
@@ -239,23 +327,44 @@ export default function GeneratePage() {
 
   const progressIndex = chatStepToProgressIndex(step);
 
+  const showImageSection =
+    images.length > 0 ||
+    step === "resolving" ||
+    step === "generating" ||
+    step === "preset_confirm" ||
+    step === "edit" ||
+    campaignStatus === "processing" ||
+    campaignStatus === "done";
+
+  const imageGridLoading =
+    step === "resolving" ||
+    step === "generating" ||
+    campaignStatus === "processing";
+
+  const imageIdleMessage =
+    step === "preset_confirm" && images.length === 0
+      ? "이미지 조합을 확정한 뒤 바로 생성을 시작합니다."
+      : undefined;
+
   // 선택된 이미지 태그
   const selectedImageTag = images.find((i) => i.id === activeSelectedImageId)?.tag;
 
   return (
-    <div className="flex h-full overflow-hidden bg-[var(--bg-main)]">
-      {/* ── 좌측 패널 ── */}
-      <div className="flex-1 flex flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--bg-main)]">
+    <ResizableChatLayout
+      main={
+        <div className="flex h-full flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--bg-main)]">
         {/* 헤더: 진행상태 */}
-        <div className="border-b border-[var(--border)] px-8 pb-8 pt-12">
-          <div className="flex items-center gap-14">
-            <p className="shrink-0 text-[17px] font-medium text-[var(--text-primary)]">진행상태</p>
+        <div className="border-b border-[var(--border)] px-7 pb-5 pt-8">
+          <div className="flex items-center gap-8">
+            <p className="shrink-0 text-[13px] font-medium text-[var(--text-secondary)]">
+              진행상태
+            </p>
             <ProgressSteps currentIndex={progressIndex} />
           </div>
         </div>
 
         {/* 컨텐츠 영역 */}
-        <div className="flex-1 overflow-y-auto px-8 py-7 space-y-6">
+        <div className="flex-1 overflow-y-auto px-7 py-6 space-y-5 text-[13px]">
           <AnimatePresence>
             {/* 캠페인 정보 - campaign_id가 생기는 순간(INIT 응답)부터 표시 */}
             {(campaignId || campaignText || channel) && (
@@ -292,7 +401,7 @@ export default function GeneratePage() {
             )}
 
             {/* 이미지 그리드 */}
-            {(images.length > 0 || step === "resolving" || step === "generating" || campaignStatus === "processing") && (
+            {showImageSection && (
               <motion.div
                 key="image-grid"
                 initial={{ opacity: 0, y: 8 }}
@@ -303,7 +412,8 @@ export default function GeneratePage() {
                   selectedImageId={activeSelectedImageId}
                   onSelect={setSelectedImageId}
                   canSelect={canSelectImage}
-                  isLoading={step === "resolving" || step === "generating" || campaignStatus === "processing"}
+                  isLoading={imageGridLoading}
+                  idleMessage={imageIdleMessage}
                   loadingLabel={
                     step === "resolving"
                       ? "캠페인 분석과 이미지 조합을 준비 중입니다..."
@@ -312,6 +422,16 @@ export default function GeneratePage() {
                   completed={generationProgress.completed}
                   total={generationProgress.total}
                 />
+              </motion.div>
+            )}
+
+            {(recommendedCopies.length > 0 || isCopyLoading) && (
+              <motion.div
+                key="recommended-copies"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <RecommendedCopies items={recommendedCopies} isLoading={isCopyLoading} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -326,22 +446,22 @@ export default function GeneratePage() {
           )}
         </div>
       </div>
-
-      {/* ── 우측 채팅 패널 ── */}
-      <div className="flex w-[500px] shrink-0 flex-col bg-[var(--bg-main)] px-7 pb-8 pt-11">
-        <div className="mb-10 flex justify-end gap-3">
-          <span className="rounded-full bg-[#ebebea] px-5 py-2 text-sm font-medium text-[#2d2d2b]">
+      }
+      chat={
+      <div className="flex h-full min-h-0 flex-col px-4 pt-5 pb-3">
+        <div className="mb-2 flex shrink-0 justify-end">
+          <span className="rounded-full bg-[#ebebea] px-3.5 py-1 text-[13px] font-medium text-[#2d2d2b]">
             C2012531
           </span>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[38px] bg-[#091018] px-5 pt-8">
-          <div className="shrink-0 px-3 pb-5">
-            <h2 className="text-[19px] font-semibold text-[var(--accent-lime)]">AI Agent 에게 요청</h2>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[14px] bg-[#091018] px-4 pt-3 pb-3">
+          <div className="shrink-0 px-2 pb-2">
+            <h2 className="text-[13px] font-semibold text-[var(--accent-lime)]">AI Agent 에게 요청</h2>
           </div>
 
           {/* 채팅 메시지 영역 */}
-          <div className="flex-1 overflow-y-auto px-3 py-1 space-y-6 bg-transparent">
+          <div className="flex-1 overflow-y-auto px-3 py-1 space-y-4 bg-transparent">
             {messages.map((msg) => (
               <ChatMessage
                 key={msg.id}
@@ -378,6 +498,7 @@ export default function GeneratePage() {
           />
         </div>
       </div>
-    </div>
+      }
+    />
   );
 }

@@ -11,6 +11,8 @@ interface Props {
   canSelect?: boolean;
   isLoading?: boolean;
   loadingLabel?: string;
+  /** 이미지 없이 섹션 제목만 표시 (프리셋 컨펌 대기 등) */
+  idleMessage?: string;
   completed?: number;
   total?: number;
 }
@@ -22,15 +24,16 @@ export default function ImageGrid({
   canSelect = true,
   isLoading = false,
   loadingLabel = "이미지 생성 중입니다...",
+  idleMessage,
   completed = 0,
   total = 0,
 }: Props) {
-  if (images.length === 0 && !isLoading) return null;
+  if (images.length === 0 && !isLoading && !idleMessage) return null;
 
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-[15px] font-semibold text-[var(--accent-lime)]">
+        <h3 className="text-[14px] font-semibold text-[var(--accent-lime)]">
           이미지 생성
         </h3>
         {(isLoading || total > 0) && (
@@ -39,6 +42,11 @@ export default function ImageGrid({
           </span>
         )}
       </div>
+      {images.length === 0 && !isLoading && idleMessage && (
+        <div className="rounded-[22px] border border-[var(--border)] bg-[#1d1d1c] px-5 py-5">
+          <p className="text-[13px] text-[var(--text-secondary)]">{idleMessage}</p>
+        </div>
+      )}
       {images.length === 0 && isLoading && (
         <div className="rounded-[22px] border border-[var(--border)] bg-[#1d1d1c] px-5 py-5">
           <div className="mb-4 flex items-center gap-3 text-sm text-[var(--text-secondary)]">

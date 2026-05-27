@@ -9,7 +9,6 @@ export type ChatStep =
   | "generating"
   | "edit"
   | "review"
-  | "matching"
   | "done";
 
 export interface ChatMessage {
@@ -22,7 +21,10 @@ export interface ChatMessage {
 export interface Preset {
   preset_id: string;
   axis1: string;
+  axis1_name?: string;   // 고객 유형명
+  axis1_color?: string;  // 고객 유형 대표색
   axis2: string;
+  axis2_name?: string;
   axis3?: string;
   display_label: string;
   display_description: string;
@@ -37,6 +39,24 @@ export interface ChatMessageResponse {
   step: ChatStep;
   campaign_id?: string;
   presets?: Preset[];
+  edit_started?: boolean;
+}
+
+export interface RecommendedCopy {
+  preset_id: string;
+  axis1: string;
+  axis1_name: string;
+  axis1_color?: string;
+  axis2_name?: string;
+  copy_tone: string;
+  /** 단일 추천 카피 (API 권장 필드) */
+  recommendation?: string;
+  /** 하위 호환 — 항상 1개 */
+  recommendations: string[];
+}
+
+export interface CopyRecommendationResponse {
+  items: RecommendedCopy[];
 }
 
 export interface ChatSession {
@@ -65,7 +85,6 @@ export type ProgressStep =
   | "생성 조합"
   | "수정"
   | "검수"
-  | "고객 매칭"
   | "발송";
 
 export const PROGRESS_STEPS: ProgressStep[] = [
@@ -76,23 +95,21 @@ export const PROGRESS_STEPS: ProgressStep[] = [
   "생성 조합",
   "수정",
   "검수",
-  "고객 매칭",
   "발송",
 ];
 
 export function chatStepToProgressIndex(step: ChatStep): number {
   switch (step) {
-    case "init":          return 0; // 캠페인 입력
+    case "init":           return 0; // 캠페인 입력
     case "channel_select": return 1; // 채널 선택
-    case "ref_image_query": return 2; // 이미지 업로드
-    case "resolving":     return 3; // 캠페인 분석
+    case "ref_image_query":return 2; // 이미지 업로드
+    case "resolving":      return 3; // 캠페인 분석
     case "preset_confirm": return 4; // 생성 조합
-    case "generating":    return 5; // 수정
-    case "edit":          return 5; // 수정
-    case "review":        return 6; // 검수
-    case "matching":      return 7; // 고객 매칭
-    case "done":          return 8; // 발송
-    default:              return 0;
+    case "generating":     return 5; // 수정
+    case "edit":           return 5; // 수정
+    case "review":         return 6; // 검수
+    case "done":           return 7; // 발송
+    default:               return 0;
   }
 }
 
@@ -104,6 +121,7 @@ export interface GeneratedImage {
   image_url: string | null;
   meta: Record<string, unknown>;
   status: "done" | "pending";
+  image_prompt?: string;
 }
 
 export interface ImageStatusResponse {

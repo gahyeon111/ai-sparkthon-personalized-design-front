@@ -6,15 +6,25 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 
 const NAV_ITEMS = [
-  { label: "이미지 생성하기", href: "/generate" },
-  { label: "캠페인 현황", href: "/dashboard" },
+  {
+    label: "이미지 생성하기",
+    href: "/generate",
+    activeIcon: "/nav-generate-active.png",
+    inactiveIcon: "/nav-generate-inactive.png",
+  },
+  {
+    label: "캠페인 현황",
+    href: "/dashboard",
+    activeIcon: "/nav-dashboard-active.png",
+    inactiveIcon: "/nav-dashboard-inactive.png",
+  },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-[208px] shrink-0 flex-col border-r border-[var(--border)] bg-[var(--bg-primary)]">
+    <aside className="flex h-full w-[280px] shrink-0 flex-col border-r border-[var(--border)] bg-[var(--bg-primary)]">
       {/* 로고 */}
       <div className="px-5 py-6">
         <Image
@@ -44,13 +54,22 @@ export default function Sidebar() {
                 />
               )}
               <span
-                className={`relative z-10 block rounded-lg px-3 py-2 text-[15px] font-medium transition-colors ${
+                className={`relative z-10 block rounded-lg px-3 py-2.5 text-[14px] font-medium transition-colors ${
                   isActive
                     ? "text-[var(--accent-lime)]"
-                    : "text-white hover:text-[var(--accent-lime)]"
+                    : "text-white"
                 }`}
               >
-                {item.label}
+                <span className="flex items-center gap-3">
+                  <Image
+                    src={isActive ? item.activeIcon : item.inactiveIcon}
+                    alt=""
+                    width={24}
+                    height={24}
+                    className="h-6 w-6 shrink-0 object-contain"
+                  />
+                  <span>{item.label}</span>
+                </span>
               </span>
             </Link>
           );

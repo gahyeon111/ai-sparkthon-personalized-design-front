@@ -1,11 +1,5 @@
-import AppShell from "@/components/AppShell";
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return (
-    <AppShell>
-      <div className="flex items-center justify-center h-full text-[var(--text-secondary)]">
-        홈 (준비 중)
-      </div>
-    </AppShell>
-  );
+  redirect("/generate");
 }

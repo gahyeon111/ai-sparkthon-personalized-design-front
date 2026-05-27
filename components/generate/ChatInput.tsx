@@ -167,7 +167,7 @@ export default function ChatInput({
       </AnimatePresence>
 
       {/* 입력 영역 */}
-      <div className="rounded-[28px] border-2 border-[var(--accent-lime)] bg-white px-5 py-4 shadow-[0_24px_64px_rgba(0,0,0,0.32)] transition-colors">
+      <div className="rounded-[14px] border-2 border-[var(--accent-lime)] bg-white px-4 py-3 shadow-[0_24px_64px_rgba(0,0,0,0.32)] transition-colors">
         <textarea
           ref={textareaRef}
           rows={1}
@@ -176,16 +176,16 @@ export default function ChatInput({
           onKeyDown={handleKeyDown}
           disabled={disabled}
           placeholder={placeholder}
-          className="min-h-[88px] w-full resize-none bg-transparent pr-2 text-[15px] leading-relaxed text-[#1f1f1d] placeholder:text-[#8b8b84] outline-none"
-          style={{ maxHeight: "168px" }}
+          className="min-h-[36px] w-full resize-none bg-transparent pr-2 text-[13px] leading-relaxed text-[#1f1f1d] placeholder:text-[#8b8b84] outline-none"
+          style={{ maxHeight: "120px" }}
         />
 
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-2 flex items-center justify-between">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d7d7d1] text-[#4a4a46] transition-colors hover:border-[#b6b6b0] hover:text-[#111111] disabled:opacity-30"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7d7d1] text-[#4a4a46] transition-colors hover:border-[#b6b6b0] hover:text-[#111111] disabled:opacity-30"
             title="참조 이미지 첨부"
           >
             <Paperclip size={18} />
@@ -201,9 +201,9 @@ export default function ChatInput({
           <button
             onClick={handleSubmit}
             disabled={disabled || !value.trim()}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-black transition-all hover:bg-[#f3f3ee] active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white transition-all hover:bg-[#222] active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
           >
-            <ArrowUp size={24} strokeWidth={2.6} />
+            <ArrowUp size={16} strokeWidth={2.5} />
           </button>
         </div>
       </div>
