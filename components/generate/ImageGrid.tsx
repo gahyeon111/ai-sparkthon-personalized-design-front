@@ -9,6 +9,7 @@ interface Props {
   selectedImageId: string | null;
   onSelect?: (id: string) => void;
   canSelect?: boolean;
+  aspectRatio?: number;
   isLoading?: boolean;
   loadingLabel?: string;
   /** 이미지 없이 섹션 제목만 표시 (프리셋 컨펌 대기 등) */
@@ -22,6 +23,7 @@ export default function ImageGrid({
   selectedImageId,
   onSelect,
   canSelect = true,
+  aspectRatio = 1,
   isLoading = false,
   loadingLabel = "이미지 생성 중입니다...",
   idleMessage,
@@ -29,6 +31,15 @@ export default function ImageGrid({
   total = 0,
 }: Props) {
   if (images.length === 0 && !isLoading && !idleMessage) return null;
+
+  const getCardAspectRatio = (img?: GeneratedImage) => {
+    const width = Number(img?.meta?.width);
+    const height = Number(img?.meta?.height);
+    if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
+      return `${width} / ${height}`;
+    }
+    return String(aspectRatio);
+  };
 
   return (
     <div>
@@ -58,7 +69,7 @@ export default function ImageGrid({
               <div
                 key={idx}
                 className="relative overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)]"
-                style={{ aspectRatio: "1 / 1" }}
+                style={{ aspectRatio: String(aspectRatio) }}
               >
                 <div className="absolute inset-0 animate-pulse bg-[linear-gradient(135deg,#2c2c2a_0%,#3b3b39_50%,#2c2c2a_100%)]" />
               </div>
@@ -94,7 +105,7 @@ export default function ImageGrid({
                     ? "border-[var(--border)] hover:border-[var(--accent)]/50"
                     : "border-[var(--border)]"
                 }`}
-                style={{ aspectRatio: "1 / 1" }}
+                style={{ aspectRatio: getCardAspectRatio(img) }}
               >
                 {/* 이미지 영역 */}
                 <div className="absolute inset-0 bg-[var(--bg-card)] flex items-center justify-center">

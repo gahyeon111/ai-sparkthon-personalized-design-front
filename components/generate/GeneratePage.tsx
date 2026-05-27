@@ -38,6 +38,11 @@ interface DisplayMessage {
   quick_replies?: string[];
 }
 
+interface EditPollState {
+  startedAt: number;
+  imageUrls: Record<string, string | null>;
+}
+
 const INIT_MESSAGE: DisplayMessage = {
   id: "init",
   role: "assistant",
@@ -64,11 +69,11 @@ export default function GeneratePage() {
   // 이미지
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
-  // 이미지 선택·편집은 모든 이미지가 완전히 완료된 이후에만 가능
-  const canSelectImage = campaignStatus === "done";
+  const [editPollState, setEditPollState] = useState<EditPollState | null>(null);
+  const isEditInProgress = editPollState !== null;
+  // 이미지 선택·편집은 모든 이미지가 완전히 완료되고, 수정 중/검수 중이 아닐 때만 가능
+  const canSelectImage = campaignStatus === "done" && step === "edit" && !isEditInProgress;
   const activeSelectedImageId = canSelectImage ? selectedImageId : null;
-
-  const [editPollTs, setEditPollTs] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -107,6 +112,7 @@ export default function GeneratePage() {
       clearInterval(pollRef.current!);
       pollRef.current = null;
       if (newStatus) setCampaignStatus(newStatus);
+      if (newStatus === "done") setStep("edit");
       setMessages((prev) => {
         if (prev.some((m) => m.id === "img-done")) return prev;
         return [
@@ -159,25 +165,45 @@ export default function GeneratePage() {
 
   // 편집 완료 폴링 — edit_started 플래그가 세팅되면 3초마다 이미지 상태를 새로고침
   useEffect(() => {
-    if (!editPollTs || !campaignId) return;
+    if (!editPollState || !campaignId) return;
     const TIMEOUT = 5 * 60 * 1000;
-    const startedAt = Date.now();
     const poll = async () => {
-      if (Date.now() - startedAt > TIMEOUT) return;
+      if (Date.now() - editPollState.startedAt > TIMEOUT) {
+        setEditPollState(null);
+        return;
+      }
       try {
         const status = await getImageStatus(campaignId);
-        setImages(
-          status.images.map((img) => ({
-            ...img,
-            image_url: img.image_url ? resolveImageUrl(img.image_url) : img.image_url,
-          }))
+        const resolvedImages = status.images.map((img) => ({
+          ...img,
+          image_url: img.image_url ? resolveImageUrl(img.image_url) : img.image_url,
+        }));
+        setImages(resolvedImages);
+
+        const editCompleted = resolvedImages.some(
+          (img) => editPollState.imageUrls[img.id] !== undefined && editPollState.imageUrls[img.id] !== img.image_url
         );
+        if (editCompleted) {
+          setEditPollState(null);
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === `edit-done-${editPollState.startedAt}`)) return prev;
+            return [
+              ...prev,
+              {
+                id: `edit-done-${editPollState.startedAt}`,
+                role: "assistant",
+                content: "이미지 수정이 완료되었습니다.",
+                showFinalizeButton: true,
+              },
+            ];
+          });
+        }
       } catch {}
     };
     poll();
     const interval = setInterval(poll, 3000);
     return () => clearInterval(interval);
-  }, [editPollTs, campaignId]);
+  }, [editPollState, campaignId]);
 
   useEffect(() => {
     if (!campaignText || presetCombinations.length === 0) return;
@@ -267,7 +293,10 @@ export default function GeneratePage() {
 
         setStep(res.step);
         if (res.edit_started) {
-          setEditPollTs(Date.now());
+          setEditPollState({
+            startedAt: Date.now(),
+            imageUrls: Object.fromEntries(images.map((img) => [img.id, img.image_url ?? null])),
+          });
         }
         if (res.campaign_id) setCampaignId((prev) => prev ?? res.campaign_id ?? null);
         if (res.presets?.length) {
@@ -275,8 +304,8 @@ export default function GeneratePage() {
           setRecommendedCopies([]);
         }
 
-        // 수정 단계 응답에만 검수하기 버튼 표시 (generating 초기 메시지에는 미표시)
-        const showReviewButton = res.step === "edit";
+        // 수정 가능 상태일 때만 검수 버튼 표시. 수정 시작 메시지에는 숨긴다.
+        const showReviewButton = res.step === "edit" && !res.edit_started;
 
         const assistantMsg: DisplayMessage = {
           id: `a-${Date.now()}`,
@@ -307,7 +336,7 @@ export default function GeneratePage() {
         setSelectedImageId(null);
       }
     },
-    [sessionId, isLoading, step, channel, activeSelectedImageId]
+    [sessionId, isLoading, step, channel, activeSelectedImageId, images]
   );
 
   // 검수하기 버튼 → 채팅으로 "검수하기" 메시지 전송
@@ -326,6 +355,7 @@ export default function GeneratePage() {
   );
 
   const progressIndex = chatStepToProgressIndex(step);
+  const channelAspectRatio = channel ? CHANNEL_SIZES[channel].width / CHANNEL_SIZES[channel].height : 1;
 
   const showImageSection =
     images.length > 0 ||
@@ -412,6 +442,7 @@ export default function GeneratePage() {
                   selectedImageId={activeSelectedImageId}
                   onSelect={setSelectedImageId}
                   canSelect={canSelectImage}
+                  aspectRatio={channelAspectRatio}
                   isLoading={imageGridLoading}
                   idleMessage={imageIdleMessage}
                   loadingLabel={
@@ -468,7 +499,12 @@ export default function GeneratePage() {
                 role={msg.role}
                 content={msg.content}
                 presets={msg.presets}
-                showFinalizeButton={msg.showFinalizeButton}
+                showFinalizeButton={
+                  Boolean(msg.showFinalizeButton) &&
+                  !isEditInProgress &&
+                  step !== "review" &&
+                  step !== "done"
+                }
                 onFinalize={handleFinalize}
                 isLoading={msg.id.startsWith("l-") && isLoading}
                 channelOptions={msg.channelOptions}
