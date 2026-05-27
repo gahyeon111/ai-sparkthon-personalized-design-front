@@ -1,0 +1,202 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { motion } from "framer-motion";
+
+const FEATURE_ITEMS = [
+  {
+    title: "캠페인 자동 분석",
+    description: "LLM이 혜택/브랜드/타깃을 알아서 파악해요",
+    logo: "/home-feature-1-logo.png",
+  },
+  {
+    title: "개인화 이미지 생성",
+    description: "3개의 축을 바탕으로 다양한 이미지를 생성해요",
+    logo: "/home-feature-2-logo.png",
+  },
+  {
+    title: "고객 자동 매칭",
+    description: "페르소나 기반 개인화 이미지를 배정해요",
+    logo: "/home-feature-3-logo.png",
+  },
+];
+
+const STATS = [
+  { value: "247", label: "생성된 캠페인" },
+  { value: "+38%", label: "평균 CTR 상승" },
+  { value: "2.3분", label: "평균 생성 시간" },
+];
+
+function AnimatedOrb() {
+  return (
+    <div className="relative flex h-[210px] w-[210px] items-center justify-center sm:h-[240px] sm:w-[240px]">
+      <div className="home-orb-pulse absolute inset-[10%] rounded-full bg-[radial-gradient(circle,_rgba(19,100,254,0.2)_0%,_rgba(19,100,254,0.1)_34%,_rgba(19,100,254,0)_74%)] blur-3xl" />
+      <motion.div
+        className="absolute inset-[11%] bg-[radial-gradient(circle_at_30%_30%,_rgba(150,210,255,0.58),_rgba(55,125,255,0.34)_28%,_rgba(10,26,61,0.06)_62%,_rgba(10,26,61,0)_76%)] blur-[2px]"
+        animate={{
+          rotate: [0, 12, -10, 0],
+          scale: [1, 1.05, 0.97, 1],
+          borderRadius: [
+            "58% 42% 55% 45% / 40% 58% 42% 60%",
+            "42% 58% 40% 60% / 55% 38% 62% 45%",
+            "60% 40% 52% 48% / 46% 60% 40% 54%",
+            "58% 42% 55% 45% / 40% 58% 42% 60%",
+          ],
+        }}
+        transition={{ duration: 8.5, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute inset-[18%] border border-[#8ec8ff]/24 bg-[radial-gradient(circle_at_65%_35%,_rgba(123,190,255,0.14),_rgba(12,32,72,0.05)_44%,_rgba(12,32,72,0)_76%)] shadow-[inset_0_0_22px_rgba(120,182,255,0.12),0_0_24px_rgba(19,100,254,0.08)] backdrop-blur-[1px]"
+        animate={{
+          rotate: [0, -14, 10, 0],
+          scale: [0.98, 1.03, 1, 0.98],
+          borderRadius: [
+            "44% 56% 48% 52% / 57% 43% 57% 43%",
+            "57% 43% 60% 40% / 45% 61% 39% 55%",
+            "46% 54% 42% 58% / 60% 44% 56% 40%",
+            "44% 56% 48% 52% / 57% 43% 57% 43%",
+          ],
+        }}
+        transition={{ duration: 7.2, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute inset-[16%] opacity-90 mix-blend-screen"
+        style={{
+          background:
+            "conic-gradient(from 120deg, rgba(19,100,254,0) 0deg, rgba(124,195,255,0.58) 45deg, rgba(19,100,254,0.02) 110deg, rgba(124,195,255,0.46) 190deg, rgba(19,100,254,0) 260deg, rgba(124,195,255,0.58) 330deg, rgba(19,100,254,0) 360deg)",
+          filter: "blur(7px)",
+        }}
+        animate={{
+          rotate: [0, 120, 240, 360],
+          scale: [1, 1.08, 0.96, 1],
+          borderRadius: [
+            "63% 37% 56% 44% / 42% 63% 37% 58%",
+            "40% 60% 38% 62% / 57% 40% 60% 43%",
+            "58% 42% 60% 40% / 45% 58% 42% 55%",
+            "63% 37% 56% 44% / 42% 63% 37% 58%",
+          ],
+        }}
+        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute inset-[24%] border border-white/7 bg-[radial-gradient(circle_at_48%_42%,_rgba(20,63,140,0.12)_0%,_rgba(8,18,36,0.18)_44%,_rgba(4,10,20,0.02)_72%,_rgba(4,10,20,0)_100%)] shadow-[inset_0_0_22px_rgba(19,100,254,0.12)]"
+        animate={{
+          borderRadius: [
+            "52% 48% 54% 46% / 45% 56% 44% 55%",
+            "45% 55% 43% 57% / 58% 42% 58% 42%",
+            "57% 43% 59% 41% / 44% 58% 42% 56%",
+            "52% 48% 54% 46% / 45% 56% 44% 55%",
+          ],
+        }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <div className="absolute inset-[31%] rounded-full bg-[var(--bg-primary)]/96 shadow-[0_0_0_1px_rgba(255,255,255,0.04)]" />
+      <motion.span
+        className="absolute left-[16%] top-[26%] h-2.5 w-2.5 rounded-full bg-[#a3d3ff] shadow-[0_0_14px_rgba(163,211,255,0.9)]"
+        animate={{ y: [-6, 12, -5], x: [0, 12, -2, 0], opacity: [0.65, 1, 0.72] }}
+        transition={{ duration: 5.8, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.span
+        className="absolute bottom-[20%] right-[18%] h-2 w-2 rounded-full bg-[#58a5ff] shadow-[0_0_12px_rgba(88,165,255,0.85)]"
+        animate={{ y: [9, -12, 6], x: [0, -8, -2, 0], opacity: [0.62, 1, 0.68] }}
+        transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </div>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <main className="min-h-screen overflow-hidden bg-[var(--bg-primary)] text-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(18,55,110,0.22),_transparent_34%),radial-gradient(circle_at_bottom,_rgba(19,100,254,0.12),_transparent_24%)]" />
+
+      <div className="relative mx-auto flex min-h-screen w-full max-w-[1600px] flex-col px-6 pb-12 pt-8 sm:px-10 lg:px-12">
+        <header className="flex items-start justify-between">
+          <Image
+            src="/gen-ai-designer-logo.png"
+            alt="GEN AI DESIGNER"
+            width={471}
+            height={174}
+            className="h-auto w-[180px] sm:w-[240px] lg:w-[280px]"
+            priority
+          />
+          <div />
+        </header>
+
+        <section className="mx-auto flex w-full max-w-[1100px] flex-1 flex-col items-center justify-center pb-6 pt-6 text-center sm:pt-10">
+          <AnimatedOrb />
+
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="mt-8"
+          >
+            <h1 className="text-[24px] font-semibold tracking-[-0.04em] text-white sm:text-[34px]">
+              AI 이미지 자동 생성 시스템
+            </h1>
+            <p className="mx-auto mt-2.5 max-w-[620px] text-[14px] leading-6 text-white/70 sm:text-[16px] sm:leading-7">
+              캠페인을 입력하시면 고객 개인화된 이미지를 자동으로 만들어 드려요.
+            </p>
+          </motion.div>
+
+          <Link
+            href="/generate"
+            className="mt-8 inline-flex w-full max-w-[360px] items-center justify-center gap-2 rounded-full border border-[#d9ff52]/40 bg-[var(--accent-lime)] px-4 py-2.5 shadow-[0_18px_40px_rgba(198,252,32,0.18)] transition-transform duration-200 hover:scale-[1.01] hover:shadow-[0_24px_50px_rgba(198,252,32,0.22)]"
+          >
+            <Image
+              src="/home-start-logo.png"
+              alt=""
+              width={40}
+              height={40}
+              className="h-6 w-6 sm:h-7 sm:w-7"
+              priority
+            />
+            <span className="text-[17px] font-semibold tracking-[-0.03em] text-[#0b1118] sm:text-[21px]">
+              시작하기
+            </span>
+          </Link>
+
+          <div className="mt-12 grid w-full gap-3 lg:grid-cols-3">
+            {FEATURE_ITEMS.map((item, index) => (
+              <motion.article
+                key={item.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * index + 0.2, duration: 0.5, ease: "easeOut" }}
+                className="rounded-[24px] border border-[#2c6cff]/35 bg-transparent px-6 py-6 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
+              >
+                <div className="flex justify-center">
+                  <Image src={item.logo} alt="" width={48} height={48} className="h-10 w-10" />
+                </div>
+                <h2 className="mt-4 text-[20px] font-semibold tracking-[-0.03em] text-white sm:text-[24px]">
+                  {item.title}
+                </h2>
+                <p className="mt-2.5 whitespace-pre-line text-[14px] leading-6 text-white/68 sm:text-[15px]">
+                  {item.description}
+                </p>
+              </motion.article>
+            ))}
+          </div>
+
+          <div className="mt-12 flex w-full max-w-[640px] flex-col items-center justify-center gap-6 sm:flex-row sm:gap-0">
+            {STATS.map((stat, index) => (
+              <div
+                key={stat.label}
+                className={`flex min-w-[150px] flex-col items-center px-6 text-center ${
+                  index < STATS.length - 1 ? "sm:border-r sm:border-white/24" : ""
+                }`}
+              >
+                <span className="text-[32px] font-light tracking-[-0.05em] text-white sm:text-[42px]">
+                  {stat.value}
+                </span>
+                <span className="mt-1.5 text-[13px] text-white/62 sm:text-[14px]">{stat.label}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}

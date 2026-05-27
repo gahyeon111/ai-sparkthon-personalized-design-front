@@ -1,22 +1,26 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import Image from "next/image";
+import { FolderKanban, LayoutDashboard, Sparkles } from "lucide-react";
 
 const NAV_ITEMS = [
   {
     label: "이미지 생성하기",
     href: "/generate",
-    activeIcon: "/nav-generate-active.png",
-    inactiveIcon: "/nav-generate-inactive.png",
+    icon: Sparkles,
   },
   {
-    label: "캠페인 현황",
+    label: "프로젝트 관리",
+    href: "/projects",
+    icon: FolderKanban,
+  },
+  {
+    label: "대시보드",
     href: "/dashboard",
-    activeIcon: "/nav-dashboard-active.png",
-    inactiveIcon: "/nav-dashboard-inactive.png",
+    icon: LayoutDashboard,
   },
 ];
 
@@ -30,9 +34,9 @@ export default function Sidebar() {
         <Image
           src="/gen-ai-designer-logo.png"
           alt="GEN AI DESIGNER"
-          width={220}
-          height={85}
-          className="h-auto w-[150px]"
+          width={471}
+          height={174}
+          className="h-auto w-[170px]"
           priority
         />
       </div>
@@ -40,6 +44,7 @@ export default function Sidebar() {
       {/* 네비게이션 */}
       <nav className="flex flex-1 flex-col gap-1 px-4 py-3">
         {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
           const isActive =
             item.href === "/"
               ? pathname === "/"
@@ -61,12 +66,10 @@ export default function Sidebar() {
                 }`}
               >
                 <span className="flex items-center gap-3">
-                  <Image
-                    src={isActive ? item.activeIcon : item.inactiveIcon}
-                    alt=""
-                    width={24}
-                    height={24}
-                    className="h-6 w-6 shrink-0 object-contain"
+                  <Icon
+                    size={20}
+                    strokeWidth={2}
+                    className={`shrink-0 ${isActive ? "text-[var(--accent-lime)]" : "text-white"}`}
                   />
                   <span>{item.label}</span>
                 </span>

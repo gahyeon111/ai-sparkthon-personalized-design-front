@@ -479,16 +479,16 @@ export default function GeneratePage() {
       </div>
       }
       chat={
-      <div className="flex h-full min-h-0 flex-col px-4 pt-5 pb-3">
+      <div className="flex h-full min-h-0 flex-col pl-4 pr-8 pt-7 pb-3">
         <div className="mb-2 flex shrink-0 justify-end">
-          <span className="rounded-full bg-[#ebebea] px-3.5 py-1 text-[13px] font-medium text-[#2d2d2b]">
+          <span className="rounded-full bg-[#E8E8E6] px-6 py-3 text-sm font-medium text-[#131313]">
             C2012531
           </span>
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[14px] bg-[#091018] px-4 pt-3 pb-3">
           <div className="shrink-0 px-2 pb-2">
-            <h2 className="text-[13px] font-semibold text-[var(--accent-lime)]">AI Agent 에게 요청</h2>
+            <h2 className="text-[16px] font-semibold text-[var(--accent-lime)]">AI Agent 에게 요청</h2>
           </div>
 
           {/* 채팅 메시지 영역 */}

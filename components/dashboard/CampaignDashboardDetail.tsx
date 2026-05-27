@@ -1,0 +1,398 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Loader2, RefreshCw, Users, X } from "lucide-react";
+import { getCampaigns, getImageStatus, type CampaignSummary } from "@/lib/api";
+import type { GeneratedImage } from "@/lib/types";
+import {
+  AXIS1_TYPES,
+  AXIS1_TYPE_MAP,
+  buildMatchingRows,
+  formatCount,
+  formatPercent,
+  getAxis1Id,
+  inferCampaignName,
+  inferChannel,
+  mockTargetCount,
+  orderImagesByAxis1,
+} from "@/lib/dashboard";
+
+function StatCard({
+  title,
+  value,
+  tone = "dark",
+}: {
+  title: string;
+  value: string;
+  tone?: "dark" | "blue" | "lime";
+}) {
+  const toneMap = {
+    dark: "bg-[#F3F3F0] text-[#131313]",
+    blue: "bg-[#2F63F6] text-white",
+    lime: "bg-[#D8FF3F] text-[#131313]",
+  };
+
+  return (
+    <div className={`rounded-[30px] px-8 py-8 ${toneMap[tone]}`}>
+      <p className="text-[15px] font-semibold">{title}</p>
+      <div className="mt-14">
+        <p className="whitespace-nowrap text-[48px] font-semibold leading-none tracking-[-0.04em] md:text-[52px]">
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function CampaignInfoField({
+  label,
+  value,
+  valueClassName = "",
+}: {
+  label: string;
+  value: string;
+  valueClassName?: string;
+}) {
+  return (
+    <div className="grid grid-cols-[92px_1fr] gap-3 text-sm">
+      <span className="text-[var(--text-secondary)]">{label}</span>
+      <span className={`font-medium text-white ${valueClassName}`}>{value}</span>
+    </div>
+  );
+}
+
+function getImageAspectRatio(image: GeneratedImage | null) {
+  const width = Number(image?.meta?.width);
+  const height = Number(image?.meta?.height);
+  if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
+    return `${width} / ${height}`;
+  }
+  return "1 / 1";
+}
+
+function StatusPill({ status }: { status: string }) {
+  return (
+    <span
+      className={`inline-flex min-w-[68px] justify-center rounded-full px-3.5 py-1.5 text-[13px] font-semibold ${
+        status === "최고"
+          ? "bg-[#2F63F6] text-white"
+          : status === "양호"
+            ? "bg-[#D8FF3F] text-[#1A1A18]"
+            : status === "보통"
+              ? "bg-black text-white"
+              : "bg-[#8A8A8A] text-white"
+      }`}
+    >
+      {status}
+    </span>
+  );
+}
+
+export default function CampaignDashboardDetail({ campaignId }: { campaignId: string }) {
+  const router = useRouter();
+  const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
+  const [images, setImages] = useState<GeneratedImage[]>([]);
+  const [imagesLoading, setImagesLoading] = useState(true);
+  const [campaignLoading, setCampaignLoading] = useState(true);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string>(AXIS1_TYPES[0]?.id ?? "");
+  const [error, setError] = useState<string | null>(null);
+
+  const loadCampaign = () => {
+    setCampaignLoading(true);
+    setError(null);
+    getCampaigns()
+      .then((items) => setCampaigns(items))
+      .catch((e) => setError(String(e)))
+      .finally(() => setCampaignLoading(false));
+  };
+
+  useEffect(() => {
+    getCampaigns()
+      .then((items) => setCampaigns(items))
+      .catch((e) => setError(String(e)))
+      .finally(() => setCampaignLoading(false));
+  }, []);
+
+  const campaign = useMemo(
+    () => campaigns.find((item) => item.id === campaignId) ?? null,
+    [campaignId, campaigns]
+  );
+
+  useEffect(() => {
+    if (!campaignId) return;
+    getImageStatus(campaignId)
+      .then((response) => setImages(response.images))
+      .catch(() => setImages([]))
+      .finally(() => setImagesLoading(false));
+  }, [campaignId]);
+
+  const orderedImages = useMemo(() => orderImagesByAxis1(images), [images]);
+  const matchingRows = useMemo(
+    () => (campaign ? buildMatchingRows(campaign, images) : []),
+    [campaign, images]
+  );
+
+  const selectedPersona = AXIS1_TYPE_MAP[selectedPersonaId] ?? AXIS1_TYPES[0];
+  const campaignName = campaign ? inferCampaignName(campaign) : "-";
+  const campaignChannel = campaign ? inferChannel(campaign) : "-";
+  const targetCount = campaign ? mockTargetCount(campaign) : 0;
+  const sentCustomers = formatCount(targetCount);
+
+  return (
+    <div className="h-full overflow-y-auto bg-[#0B1016]">
+      <div className="mx-auto max-w-[1420px] px-8 py-7">
+        <div className="mb-10 flex items-start justify-between gap-6">
+          <div>
+            <button
+              onClick={() => {
+                if (window.history.length > 1) {
+                  router.back();
+                  return;
+                }
+                router.push("/dashboard");
+              }}
+              className="inline-flex items-center gap-2 rounded-full border border-white/12 px-5 py-3 text-sm text-white/80 transition-colors hover:text-white"
+            >
+              <ArrowLeft size={16} />
+              뒤로가기
+            </button>
+            <p className="mt-6 text-[13px] uppercase tracking-[0.24em] text-[var(--text-secondary)]">
+              Campaign Dashboard
+            </p>
+            <h1 className="mt-3 text-[42px] font-semibold leading-none tracking-[-0.04em] text-white">
+              세부 캠페인 내용
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={loadCampaign}
+              disabled={campaignLoading}
+              className="flex items-center gap-2 rounded-full border border-white/15 px-5 py-3 text-sm text-white/80 transition-colors hover:text-white disabled:opacity-40"
+            >
+              <RefreshCw size={14} className={campaignLoading ? "animate-spin" : ""} />
+              새로고침
+            </button>
+            <button className="rounded-full bg-[#E8E8E6] px-6 py-3 text-sm font-medium text-[#131313]">
+              C2012531
+            </button>
+          </div>
+        </div>
+
+        {error ? (
+          <div className="mb-4 rounded-[24px] border border-red-400/20 bg-red-400/10 px-5 py-4 text-sm text-red-300">
+            {error}
+          </div>
+        ) : null}
+
+        {campaignLoading ? (
+          <div className="flex items-center justify-center py-32 text-[var(--text-secondary)]">
+            <Loader2 size={20} className="mr-2 animate-spin" /> 로딩 중...
+          </div>
+        ) : !campaign ? (
+          <div className="rounded-[32px] border border-[var(--border)] bg-[rgba(255,255,255,0.03)] px-8 py-24 text-center text-sm text-[var(--text-secondary)]">
+            선택한 캠페인을 찾을 수 없습니다.
+          </div>
+        ) : (
+          <div className="space-y-10">
+            <section>
+              <h2 className="mb-5 text-[28px] font-semibold tracking-[-0.03em] text-white">캠페인 내용</h2>
+              <div className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
+                <div className="rounded-[28px] bg-[#242424] px-6 py-6">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    <CampaignInfoField
+                      label="캠페인 ID"
+                      value={campaign.id}
+                      valueClassName="break-all text-[13px] leading-5"
+                    />
+                    <CampaignInfoField label="캠페인명" value={campaignName} />
+                    <CampaignInfoField label="채널" value={campaignChannel} />
+                    <CampaignInfoField label="생성일" value={campaign.created_at.slice(0, 10)} />
+                    <CampaignInfoField label="대상" value={sentCustomers} />
+                    <CampaignInfoField label="소재 크기" value={`${campaign.width} × ${campaign.height}`} />
+                  </div>
+                </div>
+                <div className="rounded-[28px] bg-[#242424] px-6 py-6">
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+                    <CampaignInfoField label="상태" value={campaign.status} />
+                    <CampaignInfoField label="발송일" value={campaign.created_at.slice(0, 10)} />
+                    <CampaignInfoField
+                      label="대표 유형"
+                      value={AXIS1_TYPE_MAP[getAxis1Id(orderedImages[0])]?.name ?? AXIS1_TYPES[0]?.name ?? "-"}
+                    />
+                  </div>
+                </div>
+              </div>
+
+            </section>
+
+            <section>
+              <h2 className="mb-5 text-[28px] font-semibold tracking-[-0.03em] text-white">성과 리포트</h2>
+              <div className="grid gap-4 xl:grid-cols-3">
+                <StatCard title="발송 고객" value={sentCustomers} tone="dark" />
+                <StatCard title="전체 CTR" value="10.8%" tone="blue" />
+                <StatCard title="전환율(CVR)" value="1.35%" tone="lime" />
+              </div>
+
+              <div className="mt-5 grid gap-4 xl:grid-cols-[1.25fr_0.95fr]">
+                <div className="rounded-[30px] bg-[#575757] px-5 py-5 text-white">
+                  <div className="mb-5 flex items-center justify-between">
+                    <h3 className="text-[17px] font-semibold">이미지별 매칭 현황</h3>
+                    <span className="text-xs text-white/65">프로토타입 지표</span>
+                  </div>
+                  <div className="hidden grid-cols-[88px_1.5fr_0.78fr_0.5fr_0.56fr] gap-3 border-b border-white/12 pb-3 text-[11px] text-white/65 md:grid">
+                    <span>유형</span>
+                    <span>고객군</span>
+                    <span>매칭 수</span>
+                    <span>CTR</span>
+                    <span>상태</span>
+                  </div>
+                  <div className="mt-2 space-y-2.5">
+                    {matchingRows.map((row) => (
+                      <div
+                        key={row.type.id}
+                        className="grid gap-3 rounded-[20px] bg-black/10 px-4 py-3.5 md:grid-cols-[88px_1.5fr_0.78fr_0.5fr_0.56fr] md:items-center"
+                      >
+                        <div className="inline-flex w-fit rounded-full border border-white/45 px-3.5 py-1.5 text-[18px] font-semibold">
+                          {row.type.code}
+                        </div>
+                        <div>
+                          <p className="text-[16px] font-medium leading-snug">{row.type.name}</p>
+                          <p className="mt-0.5 text-[11px] text-white/65">{row.type.englishName}</p>
+                        </div>
+                        <p className="text-[16px] font-medium">{formatCount(row.matchedCount)}</p>
+                        <p className="text-[16px] font-medium">{formatPercent(row.ctr)}</p>
+                        <div>
+                          <StatusPill status={row.status} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-[30px] bg-[#F3F3F0] px-5 py-5 text-[#131313]">
+                  <div className="mb-5 flex items-center justify-between">
+                    <h3 className="text-[17px] font-semibold">고객별 특성</h3>
+                    <div className="flex items-center gap-2 text-xs text-[#545454]">
+                      <Users size={14} />
+                      axis1 기반
+                    </div>
+                  </div>
+                  <div className="mb-5 flex flex-wrap gap-2.5">
+                    {AXIS1_TYPES.map((type) => {
+                      const isSelected = selectedPersonaId === type.id;
+                      return (
+                        <button
+                          key={type.id}
+                          onClick={() => setSelectedPersonaId(type.id)}
+                          className={`rounded-full border px-4 py-2.5 text-[16px] font-semibold transition-colors ${
+                            isSelected
+                              ? "border-[#2F63F6] bg-[#2F63F6] text-white"
+                              : "border-[#3C3C3C] bg-white text-[#1A1A18]"
+                          }`}
+                        >
+                          {type.code}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="rounded-[22px] bg-[#DADAD7] px-5 py-5">
+                    <p className="text-[21px] font-semibold">{selectedPersona?.name}</p>
+                    <p className="mt-1 text-[13px] text-[#5C5C5C]">{selectedPersona?.englishName}</p>
+                    <div className="mt-5 space-y-3 text-[15px] leading-7">
+                      <p>직업 : {selectedPersona?.occupation ?? "직장인"}</p>
+                      <p>나이 : {selectedPersona?.ageRange ?? "30대"}</p>
+                      <p>성향 : {selectedPersona?.copyTone || "실용적"}</p>
+                      <p>특징 : {selectedPersona?.behaviors?.[0] ?? selectedPersona?.description}</p>
+                      <p>비주얼 : {selectedPersona?.visualDirection}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-center">
+                <button
+                  onClick={() => setIsImageModalOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-full bg-[#2F63F6] px-12 py-4 text-lg font-semibold text-white shadow-[0_16px_40px_rgba(47,99,246,0.25)]"
+                >
+                  발송된 이미지 확인
+                </button>
+              </div>
+            </section>
+          </div>
+        )}
+      </div>
+
+      {isImageModalOpen ? (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm md:left-[280px]">
+          <div className="flex h-full items-center justify-center px-6 py-8">
+            <div className="max-h-full w-full max-w-[1420px] overflow-hidden rounded-[32px] border border-white/10 bg-[#121922] shadow-[0_32px_80px_rgba(0,0,0,0.45)]">
+            <div className="flex items-center justify-between border-b border-white/10 px-7 py-5">
+              <div>
+                <p className="text-[12px] uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                  Sent Images
+                </p>
+                <h3 className="mt-2 text-[28px] font-semibold text-white">발송된 이미지 확인</h3>
+              </div>
+              <button
+                onClick={() => setIsImageModalOpen(false)}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/12 text-white/80 transition-colors hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+              <div className="max-h-[calc(100vh-180px)] overflow-y-auto px-7 py-6">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {AXIS1_TYPES.map((type) => {
+                    const image = orderedImages.find((item) => getAxis1Id(item) === type.id) ?? null;
+                    const status = matchingRows.find((row) => row.type.id === type.id)?.status ?? "보통";
+                    return (
+                      <div key={type.id} className="overflow-hidden rounded-[28px] border border-white/8 bg-[#1A2028]">
+                        <div className="flex items-center justify-between px-5 py-4">
+                          <div>
+                            <p className="text-xs text-[var(--text-secondary)]">{type.code}</p>
+                            <p className="mt-1 text-lg font-semibold text-white">{type.name}</p>
+                          </div>
+                          <StatusPill status={status} />
+                        </div>
+                        <div className="px-5 pb-5">
+                          <div
+                            className="relative overflow-hidden rounded-[22px] bg-white/6"
+                            style={{ aspectRatio: getImageAspectRatio(image) }}
+                          >
+                            {image?.image_url ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={image.image_url} alt={image.tag} className="h-full w-full object-cover" />
+                            ) : imagesLoading ? (
+                              <div className="absolute inset-0 flex items-center justify-center text-[var(--text-secondary)]">
+                                <Loader2 size={18} className="animate-spin" />
+                              </div>
+                            ) : (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
+                                <p className="text-sm font-medium text-white/80">이미지 없음</p>
+                                <p className="text-xs leading-5 text-[var(--text-secondary)]">
+                                  해당 유형의 생성 이미지가 아직 저장되지 않았습니다.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          <p className="mt-3 text-sm text-white/78">{type.englishName}</p>
+                          <p className="mt-1 text-xs leading-5 text-[var(--text-secondary)]">
+                            {type.visualDirection}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
