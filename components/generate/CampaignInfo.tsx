@@ -1,22 +1,18 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { type ChannelType, CHANNEL_SIZES } from "@/lib/types";
 
 interface Props {
   campaignId: string | null;
   campaignText: string | null;
-  channel: ChannelType | null;
 }
 
 function formatCampaignId(id: string): string {
   return id.slice(0, 13); // UUID 앞 두 세그먼트 (e.g. a0ea57b1-66bb)
 }
 
-export default function CampaignInfo({ campaignId, campaignText, channel }: Props) {
+export default function CampaignInfo({ campaignId, campaignText }: Props) {
   if (!campaignId && !campaignText) return null;
-
-  const size = channel ? CHANNEL_SIZES[channel] : null;
 
   return (
     <motion.div
@@ -24,41 +20,25 @@ export default function CampaignInfo({ campaignId, campaignText, channel }: Prop
       animate={{ opacity: 1, y: 0 }}
       className="space-y-3"
     >
-      {/* 현재 캠페인 */}
-      {campaignText && (
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <h3 className="text-xs font-medium text-[var(--text-secondary)]">
-              현재 캠페인
-            </h3>
-            {campaignId && (
-              <span className="px-2 py-0.5 rounded-full bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[10px] font-mono text-[var(--accent)] tracking-wider">
-                {formatCampaignId(campaignId)}
-              </span>
-            )}
-          </div>
-          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-3">
-            <span className="text-sm text-[var(--text-primary)] leading-relaxed">
-              {campaignText}
-            </span>
-          </div>
-        </div>
-      )}
+      <h3 className="text-[15px] font-semibold text-[var(--accent-lime)]">
+        캠페인 기본 정보
+      </h3>
+      <div className="rounded-[22px] border border-[var(--border)] bg-[#1d1d1c] px-8 py-7">
+        <div className="grid grid-cols-[140px_1fr] gap-y-7 text-sm">
+          <span className="text-[var(--text-secondary)]">캠페인 ID</span>
+          <span className="text-[var(--text-primary)]">
+            {campaignId ? formatCampaignId(campaignId) : "-"}
+          </span>
 
-      {/* 채널 */}
-      {channel && size && (
-        <div>
-          <h3 className="text-xs font-medium text-[var(--text-secondary)] mb-2">
-            채널
-          </h3>
-          <div className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2 text-sm">
-            <span className="text-[var(--text-primary)] font-medium">{channel}</span>
-            <span className="text-[var(--text-secondary)] text-xs">
-              {size.width} × {size.height}
-            </span>
-          </div>
+          <span className="text-[var(--text-secondary)]">캠페인 내용</span>
+          <span className="text-[var(--text-primary)] leading-relaxed">
+            {campaignText || "-"}
+          </span>
+
+          <span className="text-[var(--text-secondary)]">대상 고객</span>
+          <span className="text-[var(--text-primary)]">18,500명</span>
         </div>
-      )}
+      </div>
     </motion.div>
   );
 }

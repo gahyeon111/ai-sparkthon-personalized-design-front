@@ -9,14 +9,58 @@ interface Props {
   selectedImageId: string | null;
   onSelect?: (id: string) => void;
   canSelect?: boolean;
+  isLoading?: boolean;
+  loadingLabel?: string;
+  completed?: number;
+  total?: number;
 }
 
-export default function ImageGrid({ images, selectedImageId, onSelect, canSelect = true }: Props) {
-  if (images.length === 0) return null;
+export default function ImageGrid({
+  images,
+  selectedImageId,
+  onSelect,
+  canSelect = true,
+  isLoading = false,
+  loadingLabel = "이미지 생성 중입니다...",
+  completed = 0,
+  total = 0,
+}: Props) {
+  if (images.length === 0 && !isLoading) return null;
 
   return (
     <div>
-      <h3 className="text-xs font-medium text-[var(--text-secondary)] mb-3">
+      <div className="mb-3 flex items-center justify-between">
+        <h3 className="text-[15px] font-semibold text-[var(--accent-lime)]">
+          이미지 생성
+        </h3>
+        {(isLoading || total > 0) && (
+          <span className="text-xs text-[var(--text-secondary)]">
+            {total > 0 ? `${completed}/${total} 완료` : loadingLabel}
+          </span>
+        )}
+      </div>
+      {images.length === 0 && isLoading && (
+        <div className="rounded-[22px] border border-[var(--border)] bg-[#1d1d1c] px-5 py-5">
+          <div className="mb-4 flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+            <Loader2 size={18} className="animate-spin text-[var(--accent-lime)]" />
+            <span>{loadingLabel}</span>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <div
+                key={idx}
+                className="relative overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)]"
+                style={{ aspectRatio: "1 / 1" }}
+              >
+                <div className="absolute inset-0 animate-pulse bg-[linear-gradient(135deg,#2c2c2a_0%,#3b3b39_50%,#2c2c2a_100%)]" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {images.length > 0 && (
+        <>
+      <h3 className="text-xs font-medium text-[var(--text-secondary)] mb-3 sr-only">
         이미지 생성
       </h3>
       <div className="grid grid-cols-3 gap-3">
@@ -95,6 +139,8 @@ export default function ImageGrid({ images, selectedImageId, onSelect, canSelect
         <p className="mt-2 text-xs text-[var(--text-secondary)]">
           이미지를 선택했습니다. 채팅에서 수정을 요청하세요.
         </p>
+      )}
+        </>
       )}
     </div>
   );

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import ProgressSteps from "./ProgressSteps";
 import CampaignInfo from "./CampaignInfo";
+import ChannelInfo from "./ChannelInfo";
+import PresetCombinations from "./PresetCombinations";
 import ImageGrid from "./ImageGrid";
 import ChatMessage from "./ChatMessage";
 import ChatInput, { type AttachedImage } from "./ChatInput";
@@ -48,20 +50,18 @@ export default function GeneratePage() {
   const [campaignText, setCampaignText] = useState<string | null>(null);
   const [campaignId, setCampaignId] = useState<string | null>(null);
   const [channel, setChannel] = useState<ChannelType | null>(null);
+  const [presetCombinations, setPresetCombinations] = useState<Preset[]>([]);
+  const [campaignStatus, setCampaignStatus] = useState<string>("draft");
+  const [generationProgress, setGenerationProgress] = useState({ completed: 0, total: 0 });
 
   // 이미지
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
+  const canSelectImage = step === "generating" || step === "edit";
+  const activeSelectedImageId = canSelectImage ? selectedImageId : null;
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // 수정 단계 벗어나면 이미지 선택 해제
-  useEffect(() => {
-    if (step !== "generating" && step !== "edit") {
-      setSelectedImageId(null);
-    }
-  }, [step]);
 
   // 채팅 스크롤 하단 고정
   const scrollToBottom = useCallback(() => {
@@ -93,6 +93,8 @@ export default function GeneratePage() {
     const poll = async () => {
       try {
         const status = await getImageStatus(campaignId);
+        setCampaignStatus(status.campaign_status);
+        setGenerationProgress({ completed: status.completed, total: status.total });
         setImages(status.images);
         const done =
           status.campaign_status === "done" ||
@@ -177,12 +179,13 @@ export default function GeneratePage() {
           width: size.width,
           height: size.height,
           batch_size: 1,
-          selected_image_id: selectedImageId ?? undefined,
+          selected_image_id: activeSelectedImageId ?? undefined,
           reference_images: referenceImages,
         });
 
         setStep(res.step);
         if (res.campaign_id) setCampaignId((prev) => prev ?? res.campaign_id ?? null);
+        if (res.presets?.length) setPresetCombinations(res.presets);
 
         // 수정 단계 응답에만 검수하기 버튼 표시 (generating 초기 메시지에는 미표시)
         const showReviewButton = res.step === "edit";
@@ -216,7 +219,7 @@ export default function GeneratePage() {
         setSelectedImageId(null);
       }
     },
-    [sessionId, isLoading, step, channel, selectedImageId]
+    [sessionId, isLoading, step, channel, activeSelectedImageId]
   );
 
   // 검수하기 버튼 → 채팅으로 "검수하기" 메시지 전송
@@ -237,20 +240,22 @@ export default function GeneratePage() {
   const progressIndex = chatStepToProgressIndex(step);
 
   // 선택된 이미지 태그
-  const selectedImageTag = images.find((i) => i.id === selectedImageId)?.tag;
+  const selectedImageTag = images.find((i) => i.id === activeSelectedImageId)?.tag;
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full overflow-hidden bg-[var(--bg-main)]">
       {/* ── 좌측 패널 ── */}
-      <div className="flex-1 flex flex-col overflow-hidden border-r border-[var(--border)]">
+      <div className="flex-1 flex flex-col overflow-hidden border-r border-[var(--border)] bg-[var(--bg-main)]">
         {/* 헤더: 진행상태 */}
-        <div className="px-6 pt-5 pb-4 border-b border-[var(--border)]">
-          <p className="text-xs text-[var(--text-secondary)] mb-4">진행상태</p>
-          <ProgressSteps currentIndex={progressIndex} />
+        <div className="border-b border-[var(--border)] px-8 pb-8 pt-12">
+          <div className="flex items-center gap-14">
+            <p className="shrink-0 text-[17px] font-medium text-[var(--text-primary)]">진행상태</p>
+            <ProgressSteps currentIndex={progressIndex} />
+          </div>
         </div>
 
         {/* 컨텐츠 영역 */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        <div className="flex-1 overflow-y-auto px-8 py-7 space-y-6">
           <AnimatePresence>
             {/* 캠페인 정보 - campaign_id가 생기는 순간(INIT 응답)부터 표시 */}
             {(campaignId || campaignText || channel) && (
@@ -262,13 +267,32 @@ export default function GeneratePage() {
                 <CampaignInfo
                   campaignId={campaignId}
                   campaignText={campaignText}
-                  channel={channel}
                 />
               </motion.div>
             )}
 
+            {channel && (
+              <motion.div
+                key="channel-info"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <ChannelInfo channel={channel} />
+              </motion.div>
+            )}
+
+            {presetCombinations.length > 0 && (
+              <motion.div
+                key="preset-combinations"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <PresetCombinations presets={presetCombinations} />
+              </motion.div>
+            )}
+
             {/* 이미지 그리드 */}
-            {images.length > 0 && (
+            {(images.length > 0 || step === "resolving" || step === "generating" || campaignStatus === "processing") && (
               <motion.div
                 key="image-grid"
                 initial={{ opacity: 0, y: 8 }}
@@ -276,9 +300,17 @@ export default function GeneratePage() {
               >
                 <ImageGrid
                   images={images}
-                  selectedImageId={selectedImageId}
+                  selectedImageId={activeSelectedImageId}
                   onSelect={setSelectedImageId}
-                  canSelect={step === "generating" || step === "edit"}
+                  canSelect={canSelectImage}
+                  isLoading={step === "resolving" || step === "generating" || campaignStatus === "processing"}
+                  loadingLabel={
+                    step === "resolving"
+                      ? "캠페인 분석과 이미지 조합을 준비 중입니다..."
+                      : "이미지를 생성하고 있습니다..."
+                  }
+                  completed={generationProgress.completed}
+                  total={generationProgress.total}
                 />
               </motion.div>
             )}
@@ -296,43 +328,55 @@ export default function GeneratePage() {
       </div>
 
       {/* ── 우측 채팅 패널 ── */}
-      <div className="w-[360px] shrink-0 flex flex-col bg-[#13151f]">
-        {/* 채팅 메시지 영역 */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-          {messages.map((msg) => (
-            <ChatMessage
-              key={msg.id}
-              role={msg.role}
-              content={msg.content}
-              presets={msg.presets}
-              showFinalizeButton={msg.showFinalizeButton}
-              onFinalize={handleFinalize}
-              isLoading={msg.id.startsWith("l-") && isLoading}
-              channelOptions={msg.channelOptions}
-              onQuickReply={handleChannelSelect}
-              quick_replies={msg.quick_replies}
-            />
-          ))}
-          <div ref={messagesEndRef} />
+      <div className="flex w-[500px] shrink-0 flex-col bg-[var(--bg-main)] px-7 pb-8 pt-11">
+        <div className="mb-10 flex justify-end gap-3">
+          <span className="rounded-full bg-[#ebebea] px-5 py-2 text-sm font-medium text-[#2d2d2b]">
+            C2012531
+          </span>
         </div>
 
-        {/* 입력 영역 */}
-        <ChatInput
-          onSend={handleSend}
-          disabled={isLoading || isInitializing || step === "done"}
-          placeholder={
-            step === "init"
-              ? "캠페인 문구를 입력하세요..."
-              : step === "resolving"
-              ? "답변을 입력하세요..."
-              : step === "ref_image_query"
-              ? "참조 이미지를 첨부하거나 '바로 생성'을 입력하세요..."
-              : selectedImageId
-              ? "수정 요청을 입력하세요..."
-              : "메시지를 입력하세요..."
-          }
-          selectedImageTag={selectedImageTag}
-        />
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[38px] bg-[#091018] px-5 pt-8">
+          <div className="shrink-0 px-3 pb-5">
+            <h2 className="text-[19px] font-semibold text-[var(--accent-lime)]">AI Agent 에게 요청</h2>
+          </div>
+
+          {/* 채팅 메시지 영역 */}
+          <div className="flex-1 overflow-y-auto px-3 py-1 space-y-6 bg-transparent">
+            {messages.map((msg) => (
+              <ChatMessage
+                key={msg.id}
+                role={msg.role}
+                content={msg.content}
+                presets={msg.presets}
+                showFinalizeButton={msg.showFinalizeButton}
+                onFinalize={handleFinalize}
+                isLoading={msg.id.startsWith("l-") && isLoading}
+                channelOptions={msg.channelOptions}
+                onQuickReply={handleChannelSelect}
+                quick_replies={msg.quick_replies}
+              />
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* 입력 영역 */}
+          <ChatInput
+            onSend={handleSend}
+            disabled={isLoading || isInitializing || step === "done"}
+            placeholder={
+              step === "init"
+                ? "캠페인 문구를 입력하세요..."
+                : step === "resolving"
+                ? "답변을 입력하세요..."
+                : step === "ref_image_query"
+                ? "참조 이미지를 첨부하거나 '바로 생성'을 입력하세요..."
+                : selectedImageId
+                ? "수정 요청을 입력하세요..."
+                : "메시지를 입력하세요..."
+            }
+            selectedImageTag={selectedImageTag}
+          />
+        </div>
       </div>
     </div>
   );

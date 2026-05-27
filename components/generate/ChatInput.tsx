@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ArrowUp, Sparkles, Paperclip, X, Image as ImageIcon } from "lucide-react";
+import { ArrowUp, Paperclip, X, Image as ImageIcon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 export type RefImageUsage =
@@ -88,10 +88,10 @@ export default function ChatInput({
   };
 
   return (
-    <div className="px-4 py-3 border-t border-[var(--border)] bg-[var(--bg-primary)]">
+    <div className="shrink-0 bg-transparent px-5 pb-5 pt-4">
       {/* 선택된 이미지 표시 (수정 모드) */}
       {selectedImageTag && (
-        <div className="mb-2 px-3 py-1.5 rounded-lg bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-xs text-[var(--accent)] flex items-center gap-1.5">
+        <div className="mb-3 flex items-center gap-1.5 rounded-full border border-[var(--accent-lime)]/30 bg-[var(--accent-lime)]/10 px-3 py-1.5 text-xs text-[var(--accent-lime)]">
           <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
           수정 대상: {selectedImageTag}
         </div>
@@ -104,7 +104,7 @@ export default function ChatInput({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="mb-2 flex gap-2 flex-wrap"
+            className="mb-3 flex flex-wrap gap-2"
           >
             {attachments.map((att, idx) => (
               <div key={idx} className="relative group">
@@ -136,7 +136,7 @@ export default function ChatInput({
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 6 }}
-            className="mb-2 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-card)]"
+            className="mb-3 rounded-[24px] border border-[#41413d] bg-[#12171e] p-4"
           >
             <div className="flex items-center gap-2 mb-2">
               <ImageIcon size={13} className="text-[var(--text-secondary)]" />
@@ -167,8 +167,7 @@ export default function ChatInput({
       </AnimatePresence>
 
       {/* 입력 영역 */}
-      <div className="flex items-end gap-2 rounded-2xl border border-[var(--border)] bg-[var(--bg-input)] px-3 py-2 focus-within:border-[var(--accent)] transition-colors">
-        <Sparkles size={16} className="text-[var(--accent)] mb-1.5 shrink-0" />
+      <div className="rounded-[28px] border-2 border-[var(--accent-lime)] bg-white px-5 py-4 shadow-[0_24px_64px_rgba(0,0,0,0.32)] transition-colors">
         <textarea
           ref={textareaRef}
           rows={1}
@@ -177,36 +176,36 @@ export default function ChatInput({
           onKeyDown={handleKeyDown}
           disabled={disabled}
           placeholder={placeholder}
-          className="flex-1 bg-transparent text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] resize-none outline-none leading-relaxed"
-          style={{ minHeight: "24px", maxHeight: "120px" }}
+          className="min-h-[88px] w-full resize-none bg-transparent pr-2 text-[15px] leading-relaxed text-[#1f1f1d] placeholder:text-[#8b8b84] outline-none"
+          style={{ maxHeight: "168px" }}
         />
 
-        {/* 파일 첨부 버튼 */}
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled}
-          className="mb-0.5 w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-30 transition-colors"
-          title="참조 이미지 첨부"
-        >
-          <Paperclip size={14} />
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileChange}
-        />
+        <div className="mt-3 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disabled}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d7d7d1] text-[#4a4a46] transition-colors hover:border-[#b6b6b0] hover:text-[#111111] disabled:opacity-30"
+            title="참조 이미지 첨부"
+          >
+            <Paperclip size={18} />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
 
-        {/* 전송 버튼 */}
-        <button
-          onClick={handleSubmit}
-          disabled={disabled || !value.trim()}
-          className="mb-0.5 w-7 h-7 rounded-full bg-[var(--accent-lime)] flex items-center justify-center shrink-0 transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 active:scale-95"
-        >
-          <ArrowUp size={14} className="text-black" />
-        </button>
+          <button
+            onClick={handleSubmit}
+            disabled={disabled || !value.trim()}
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-black transition-all hover:bg-[#f3f3ee] active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ArrowUp size={24} strokeWidth={2.6} />
+          </button>
+        </div>
       </div>
     </div>
   );
