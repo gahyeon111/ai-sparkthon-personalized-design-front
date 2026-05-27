@@ -1,0 +1,101 @@
+"use client";
+
+import { motion, AnimatePresence } from "framer-motion";
+import { Loader2 } from "lucide-react";
+import type { GeneratedImage } from "@/lib/types";
+
+interface Props {
+  images: GeneratedImage[];
+  selectedImageId: string | null;
+  onSelect?: (id: string) => void;
+  canSelect?: boolean;
+}
+
+export default function ImageGrid({ images, selectedImageId, onSelect, canSelect = true }: Props) {
+  if (images.length === 0) return null;
+
+  return (
+    <div>
+      <h3 className="text-xs font-medium text-[var(--text-secondary)] mb-3">
+        이미지 생성
+      </h3>
+      <div className="grid grid-cols-3 gap-3">
+        <AnimatePresence>
+          {images.map((img, idx) => {
+            const isSelected = img.id === selectedImageId;
+            const isDone = img.status === "done" && img.image_url;
+            const clickable = isDone && canSelect && !!onSelect;
+
+            return (
+              <motion.div
+                key={img.id}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: idx * 0.05, duration: 0.3 }}
+                onClick={() => clickable && onSelect!(img.id)}
+                className={`relative rounded-xl overflow-hidden border-2 transition-all ${
+                  clickable ? "cursor-pointer" : "cursor-default"
+                } ${
+                  isSelected
+                    ? "border-[var(--accent)] shadow-lg shadow-[var(--accent)]/20"
+                    : clickable
+                    ? "border-[var(--border)] hover:border-[var(--accent)]/50"
+                    : "border-[var(--border)]"
+                }`}
+                style={{ aspectRatio: "1 / 1" }}
+              >
+                {/* 이미지 영역 */}
+                <div className="absolute inset-0 bg-[var(--bg-card)] flex items-center justify-center">
+                  {isDone && img.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={img.image_url}
+                      alt={img.tag}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Loader2
+                      size={20}
+                      className="text-[var(--text-secondary)] animate-spin"
+                    />
+                  )}
+                </div>
+
+                {/* 선택 오버레이 */}
+                {isSelected && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="absolute inset-0 bg-[var(--accent)]/10 pointer-events-none"
+                  />
+                )}
+
+                {/* 하단 태그 */}
+                <div className="absolute bottom-0 left-0 right-0 px-2 py-1.5 bg-gradient-to-t from-black/70 to-transparent">
+                  <p className="text-[10px] text-white/80 truncate">
+                    #{idx + 1}{" "}
+                    <span className="text-white/50">
+                      {img.tag || "생성 중..."}
+                    </span>
+                  </p>
+                </div>
+
+                {/* 선택 뱃지 */}
+                {isSelected && (
+                  <div className="absolute top-2 right-2 bg-[var(--accent)] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                    선택됨
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+      {selectedImageId && canSelect && (
+        <p className="mt-2 text-xs text-[var(--text-secondary)]">
+          이미지를 선택했습니다. 채팅에서 수정을 요청하세요.
+        </p>
+      )}
+    </div>
+  );
+}
