@@ -76,6 +76,10 @@ async function request<T>(
         throw new Error(`API ${path} → ${res.status}: ${text}`);
       }
 
+      if (res.status === 204) {
+        return undefined as T;
+      }
+
       return (await res.json()) as T;
     } catch (error) {
       lastError = error;
@@ -201,6 +205,56 @@ export interface GalleryImage {
 
 export async function getAllImages(sort: "ctr_desc" | "newest" = "ctr_desc"): Promise<GalleryImage[]> {
   return request(`/api/image/all?sort=${sort}`);
+}
+
+// ─── Entities ─────────────────────────────────────────────────────────────
+
+export interface EntityItem {
+  id: string;
+  source: "builtin" | "user";
+  name_kr: string;
+  name_en: string;
+  aliases?: string[];
+  key_color?: string;
+  definition?: string;
+  image_hint?: string;
+  style_vibe?: string;
+  trigger_keywords?: string[];
+  description?: string;
+  icon_hint?: string;
+  category?: string;
+  logo_assets?: string[];
+  display_logo?: string | null;
+}
+
+export type EntityType = "brands" | "services" | "benefits" | "samsungcards";
+
+export async function getEntities(type: EntityType): Promise<EntityItem[]> {
+  return request(`/api/entities/${type}`);
+}
+
+export async function addEntity(
+  type: EntityType,
+  body: Record<string, unknown>
+): Promise<{ entity_id: string }> {
+  return request(`/api/entities/${type}`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteEntity(
+  type: EntityType,
+  entityId: string
+): Promise<void> {
+  await request(`/api/entities/${type.replace(/s$/, "")}/${entityId}`, {
+    method: "DELETE",
+  });
+}
+
+export function resolveLogoUrl(displayLogo: string | null | undefined): string {
+  if (!displayLogo) return "";
+  return `${BASE}/static/logos/${displayLogo}`;
 }
 
 // ─── Postprocess ──────────────────────────────────────────────────────────
