@@ -273,6 +273,22 @@ export function resolveLogoUrl(displayLogo: string | null | undefined): string {
   return `${BASE}/static/logos/${displayLogo}`;
 }
 
+export async function uploadReferenceImage(
+  file: File
+): Promise<{ filename: string; file_path: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${BASE}/api/chat/upload-reference`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`참조 이미지 업로드 실패: ${text}`);
+  }
+  return res.json();
+}
+
 // ─── Postprocess ──────────────────────────────────────────────────────────
 
 export async function postprocess(body: {

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
-import type { Preset } from "@/lib/types";
+import { CHANNEL_SIZES, type ChannelType, type Preset } from "@/lib/types";
 
 interface Props {
   role: "user" | "assistant";
@@ -75,7 +75,11 @@ export default function ChatMessage({
           )}
           {channelOptions && channelOptions.length > 0 && onQuickReply && (
             <div className="mt-3 flex flex-wrap gap-2">
-              {channelOptions.map((ch) => (
+              {channelOptions.map((ch) => {
+                const channelName = ch as ChannelType;
+                const size = CHANNEL_SIZES[channelName];
+
+                return (
                 <button
                   key={ch}
                   onClick={() => handleQuickReplyClick(ch)}
@@ -85,9 +89,10 @@ export default function ChatMessage({
                       : "border-[#a8a8a2] bg-white text-[#343432] hover:border-[var(--accent-lime)] hover:bg-[rgba(198,252,32,0.14)] hover:text-[#263000]"
                   }`}
                 >
-                  {ch}
+                  {size ? `${ch} ${size.width} × ${size.height}` : ch}
                 </button>
-              ))}
+                );
+              })}
             </div>
           )}
 

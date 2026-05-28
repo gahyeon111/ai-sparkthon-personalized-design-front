@@ -8,7 +8,8 @@ export type RefImageUsage =
   | "STYLE_REFERENCE"
   | "LOGO_EXTRACTION"
   | "COMPOSITION_REFERENCE"
-  | "COLOR_REFERENCE";
+  | "COLOR_REFERENCE"
+  | "IMAGE_SYNTHESIS";
 
 export interface AttachedImage {
   file: File;
@@ -21,7 +22,12 @@ const USAGE_OPTIONS: { value: RefImageUsage; label: string }[] = [
   { value: "LOGO_EXTRACTION", label: "로고 추출" },
   { value: "COMPOSITION_REFERENCE", label: "구도 참고" },
   { value: "COLOR_REFERENCE", label: "색감 참고" },
+  { value: "IMAGE_SYNTHESIS", label: "이미지 합성" },
 ];
+
+const PICKER_USAGE_OPTIONS = USAGE_OPTIONS.filter(
+  (option) => option.value !== "IMAGE_SYNTHESIS"
+);
 
 /** 텍스트 기반으로 usage 추론 — 매칭 안 되면 STYLE_REFERENCE 기본값 */
 function inferUsageFromText(text: string): RefImageUsage {
@@ -37,6 +43,9 @@ interface Props {
   disabled?: boolean;
   placeholder?: string;
   selectedImageTag?: string | null;
+  step?: "init" | "edit" | string;
+  campaignExamples?: string[];
+  onExampleSelect?: (example: string) => void;
 }
 
 export default function ChatInput({
@@ -44,6 +53,9 @@ export default function ChatInput({
   disabled,
   placeholder = "메시지를 입력하세요",
   selectedImageTag,
+  step,
+  campaignExamples = [],
+  onExampleSelect,
 }: Props) {
   const [value, setValue] = useState("");
   const [attachments, setAttachments] = useState<AttachedImage[]>([]);
@@ -89,11 +101,26 @@ export default function ChatInput({
     }
   };
 
+  // 수정 모드: 최대 1장, 일반 모드: 최대 2장
+  const maxAttachments = selectedImageTag ? 1 : 2;
+  const atAttachmentLimit = attachments.length >= maxAttachments;
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPendingFile(file);
-    setShowUsagePicker(true);
+    // 수정 모드(이미지 선택됨)에서는 usage picker 없이 바로 IMAGE_SYNTHESIS로 추가
+    // 이미 1장이면 교체
+    if (selectedImageTag) {
+      const previewUrl = URL.createObjectURL(file);
+      setAttachments((prev) => {
+        // 기존 attachment URL 해제
+        prev.forEach((a) => URL.revokeObjectURL(a.previewUrl));
+        return [{ file, previewUrl, usage_type: "IMAGE_SYNTHESIS" }];
+      });
+    } else if (attachments.length < maxAttachments) {
+      setPendingFile(file);
+      setShowUsagePicker(true);
+    }
     // reset input so same file can be re-selected
     e.target.value = "";
   };
@@ -120,11 +147,43 @@ export default function ChatInput({
 
   return (
     <div className="shrink-0 bg-transparent px-5 pb-5 pt-4">
+      {step === "init" && campaignExamples.length > 0 && (
+        <div className="mb-3 rounded-[20px] border border-[#3a414a] bg-[#12171e] px-4 py-3">
+          <p className="mb-2 text-[11px] font-medium text-[var(--text-secondary)]">
+            예시 캠페인
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {campaignExamples.map((example) => (
+              <button
+                key={example}
+                type="button"
+                onClick={() => onExampleSelect?.(example)}
+                disabled={disabled}
+                className="rounded-full border border-[#48515d] bg-[#18202a] px-3 py-1.5 text-left text-[11px] text-[var(--text-primary)] transition-colors hover:border-[var(--accent-lime)] hover:text-[var(--accent-lime)] disabled:opacity-40"
+              >
+                {example}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {step === "edit" && (
+        <div className="mb-3 rounded-[16px] border border-[var(--accent-lime)]/25 bg-[var(--accent-lime)]/8 px-3 py-2 text-[11px] text-[var(--text-primary)]">
+          가능한 수정: 프롬프트 편집 / 이미지 합성 / 배경 제거
+        </div>
+      )}
+
       {/* 선택된 이미지 표시 (수정 모드) */}
       {selectedImageTag && (
-        <div className="mb-3 flex items-center gap-1.5 rounded-full border border-[var(--accent-lime)]/30 bg-[var(--accent-lime)]/10 px-3 py-1.5 text-xs text-[var(--accent-lime)]">
-          <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
-          수정 대상: {selectedImageTag}
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 rounded-full border border-[var(--accent-lime)]/30 bg-[var(--accent-lime)]/10 px-3 py-1.5 text-xs text-[var(--accent-lime)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
+            수정 대상: {selectedImageTag}
+          </div>
+          <span className="shrink-0 text-[10px] text-[var(--text-secondary)]">
+            📎 이미지 첨부 시 합성 모드
+          </span>
         </div>
       )}
 
@@ -179,7 +238,7 @@ export default function ChatInput({
               </span>
             </div>
             <div className="flex gap-2 flex-wrap">
-              {USAGE_OPTIONS.map((opt) => (
+              {PICKER_USAGE_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => confirmUsage(opt.value)}
@@ -195,6 +254,9 @@ export default function ChatInput({
                 취소
               </button>
             </div>
+            <p className="mt-3 text-[11px] text-[var(--text-secondary)]">
+              원하는 기능이 없으면 채팅창에 직접 입력해 주세요.
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -217,9 +279,15 @@ export default function ChatInput({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            disabled={disabled}
+            disabled={disabled || atAttachmentLimit}
             className="flex h-8 w-8 items-center justify-center rounded-full border border-[#d7d7d1] text-[#4a4a46] transition-colors hover:border-[#b6b6b0] hover:text-[#111111] disabled:opacity-30"
-            title="참조 이미지 첨부"
+            title={
+              atAttachmentLimit
+                ? selectedImageTag
+                  ? "이미지 합성 시 최대 1장까지 첨부 가능합니다"
+                  : "최대 2장까지 첨부 가능합니다"
+                : "참조 이미지 첨부"
+            }
           >
             <Paperclip size={18} />
           </button>

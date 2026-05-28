@@ -17,6 +17,7 @@ import {
   sendMessage,
   getImageStatus,
   resolveImageUrl,
+  uploadReferenceImage,
 } from "@/lib/api";
 import {
   chatStepToProgressIndex,
@@ -48,6 +49,12 @@ const INIT_MESSAGE: DisplayMessage = {
   role: "assistant",
   content: "캠페인 내용(문구)을 입력해주세요.",
 };
+
+const CAMPAIGN_EXAMPLES = [
+  "파리바게트에서 결제 시 블루라벨 제품 30% 할인",
+  "이마트 최대 5,000원 할인",
+  "주유소 이용 시 L당 50원 1. 할인 + 5% 캐시백",
+];
 
 export default function GeneratePage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -306,11 +313,27 @@ export default function GeneratePage() {
 
       const size = activeChannel ? CHANNEL_SIZES[activeChannel] : { width: 1024, height: 1024 };
 
-      // 첨부 이미지 → reference_images 형식으로 변환 (filename 기반)
-      const referenceImages = attachments?.map((att) => ({
-        filename: att.file.name,
-        usage_type: att.usage_type,
-      }));
+      // 첨부 이미지 → ComfyUI에 업로드 후 reference_images 형식으로 변환
+      let referenceImages: Array<{ filename: string; usage_type: string }> | undefined;
+      if (attachments && attachments.length > 0) {
+        try {
+          const uploaded = await Promise.all(
+            attachments.map((att) => uploadReferenceImage(att.file))
+          );
+          referenceImages = attachments.map((att, i) => ({
+            filename: uploaded[i].filename,
+            file_path: uploaded[i].file_path,
+            usage_type: att.usage_type,
+          }));
+        } catch (uploadErr) {
+          console.error("참조 이미지 업로드 실패", uploadErr);
+          // 업로드 실패 시 원본 파일명으로 폴백 (초기 생성 단계 참조 이미지에서는 서버가 재업로드)
+          referenceImages = attachments.map((att) => ({
+            filename: att.file.name,
+            usage_type: att.usage_type,
+          }));
+        }
+      }
 
       try {
         const res = await sendMessage(sessionId, {
@@ -426,6 +449,13 @@ export default function GeneratePage() {
   const handleFinalize = useCallback(() => {
     handleSend("검수하기");
   }, [handleSend]);
+
+  const handleExampleSelect = useCallback(
+    (example: string) => {
+      handleSend(example);
+    },
+    [handleSend]
+  );
 
   // 채널 버튼 클릭 → 채널명을 메시지로 전송 (w/h는 CHANNEL_SIZES에서 결정)
   const handleChannelSelect = useCallback(
@@ -563,13 +593,7 @@ export default function GeneratePage() {
       </div>
       }
       chat={
-      <div className="flex h-full min-h-0 flex-col pl-4 pr-8 pt-7 pb-3">
-        <div className="mb-2 flex shrink-0 justify-end">
-          <span className="rounded-full bg-[#5f605d] px-3 py-1.5 text-[11px] font-medium text-[#d7d8d3]">
-            C2012531
-          </span>
-        </div>
-
+      <div className="flex h-full min-h-0 flex-col pl-4 pr-8 pt-4 pb-3">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[14px] bg-[#091018] px-4 pt-3 pb-3">
           <div className="shrink-0 px-2 pb-2">
             <h2 className="text-[16px] font-medium text-[var(--accent-lime)]">AI Agent 에게 요청</h2>
@@ -615,6 +639,9 @@ export default function GeneratePage() {
                 : "메시지를 입력하세요..."
             }
             selectedImageTag={selectedImageTag}
+            step={step}
+            campaignExamples={CAMPAIGN_EXAMPLES}
+            onExampleSelect={handleExampleSelect}
           />
         </div>
       </div>
