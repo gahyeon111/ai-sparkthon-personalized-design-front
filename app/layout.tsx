@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "GEN AI DESIGNER",
+  title: "DESIGN, But Personal",
   description: "삼성카드 AI 배너 생성 시스템",
 };
 
