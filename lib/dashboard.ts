@@ -1,5 +1,5 @@
-import type { CampaignSummary } from "./api";
 import type { GeneratedImage } from "./types";
+import type { CampaignSummary } from "./api";
 
 type Axis1SourceItem = {
   id: string;
@@ -125,10 +125,7 @@ export const AXIS1_TYPE_MAP = Object.fromEntries(
   AXIS1_TYPES.map((item) => [item.id, item])
 );
 
-const MOCK_TARGETS = [18500, 12400, 9800, 15200, 11000, 8900];
 const MOCK_CHANNELS = ["이벤트 배너", "메인 배너", "로그인 팝업"];
-const MOCK_CTRS = [18.4, 15.5, 10.2, 8.4, 7.6, 5.2];
-const MOCK_STATUSES = ["최고", "양호", "양호", "보통", "보통", "낮음"] as const;
 
 export function inferCampaignName(campaign: CampaignSummary) {
   const text = campaign.campaign_text.trim();
@@ -145,34 +142,12 @@ export function inferChannel(campaign: CampaignSummary) {
   return MOCK_CHANNELS[hash % MOCK_CHANNELS.length];
 }
 
-export function mockTargetCount(campaign: CampaignSummary) {
-  const hash = hashString(campaign.id);
-  return MOCK_TARGETS[hash % MOCK_TARGETS.length];
-}
-
 export function formatCount(value: number) {
   return `${value.toLocaleString("ko-KR")}명`;
 }
 
 export function formatPercent(value: number) {
   return `${value.toFixed(1)}%`;
-}
-
-export function buildMatchingRows(campaign: CampaignSummary, images: GeneratedImage[]) {
-  const target = mockTargetCount(campaign);
-  const orderedImages = orderImagesByAxis1(images);
-
-  return AXIS1_TYPES.map((type, index) => {
-    const ratio = [0.28, 0.21, 0.17, 0.14, 0.11, 0.09][index] ?? 0.08;
-    const matchedCount = Math.max(100, Math.round(target * ratio));
-    return {
-      type,
-      image: orderedImages.find((item) => getAxis1Id(item) === type.id) ?? orderedImages[index] ?? null,
-      matchedCount,
-      ctr: MOCK_CTRS[index],
-      status: MOCK_STATUSES[index],
-    };
-  });
 }
 
 export function orderImagesByAxis1(images: GeneratedImage[]) {

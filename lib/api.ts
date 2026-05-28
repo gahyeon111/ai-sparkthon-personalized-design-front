@@ -3,6 +3,7 @@ import type {
   ChatSession,
   ImageStatusResponse,
   Campaign,
+  CampaignSimulationResponse,
   CopyRecommendationResponse,
   Preset,
 } from "./types";
@@ -149,6 +150,14 @@ export async function getCampaigns(): Promise<CampaignSummary[]> {
 
 export async function getCampaign(campaignId: string): Promise<Campaign> {
   return request(`/api/campaign/${campaignId}`);
+}
+
+export async function getCampaignSimulation(
+  campaignId: string,
+  options?: { force?: boolean }
+): Promise<CampaignSimulationResponse> {
+  const query = options?.force ? "?force=true" : "";
+  return request(`/api/campaign/${campaignId}/simulation${query}`);
 }
 
 export async function finalizeCampaign(

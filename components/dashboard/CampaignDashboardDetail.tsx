@@ -3,18 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Loader2, RefreshCw, Users, X } from "lucide-react";
-import { getCampaigns, getImageStatus, type CampaignSummary } from "@/lib/api";
-import type { GeneratedImage } from "@/lib/types";
+import { getCampaignSimulation, getCampaigns, getImageStatus, type CampaignSummary } from "@/lib/api";
+import type { CampaignSimulationResponse, GeneratedImage } from "@/lib/types";
 import {
   AXIS1_TYPES,
   AXIS1_TYPE_MAP,
-  buildMatchingRows,
   formatCount,
   formatPercent,
   getAxis1Id,
   inferCampaignName,
   inferChannel,
-  mockTargetCount,
   orderImagesByAxis1,
 } from "@/lib/dashboard";
 
@@ -22,21 +20,31 @@ function StatCard({
   title,
   value,
   tone = "dark",
+  description,
 }: {
   title: string;
   value: string;
   tone?: "dark" | "blue" | "lime";
+  description?: string;
 }) {
   const toneMap = {
     dark: "bg-[#F3F3F0] text-[#131313]",
     blue: "bg-[#2F63F6] text-white",
     lime: "bg-[#D8FF3F] text-[#131313]",
   };
+  const descToneMap = {
+    dark: "text-[#131313]/50",
+    blue: "text-white/60",
+    lime: "text-[#131313]/50",
+  };
 
   return (
     <div className={`rounded-[30px] px-8 py-8 ${toneMap[tone]}`}>
       <p className="text-[15px] font-semibold">{title}</p>
-      <div className="mt-14">
+      {description && (
+        <p className={`mt-2 text-[11px] leading-5 ${descToneMap[tone]}`}>{description}</p>
+      )}
+      <div className={description ? "mt-8" : "mt-14"}>
         <p className="whitespace-nowrap text-[48px] font-semibold leading-none tracking-[-0.04em] md:text-[52px]">
           {value}
         </p>
@@ -93,8 +101,10 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
   const router = useRouter();
   const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
   const [images, setImages] = useState<GeneratedImage[]>([]);
+  const [simulation, setSimulation] = useState<CampaignSimulationResponse | null>(null);
   const [imagesLoading, setImagesLoading] = useState(true);
   const [campaignLoading, setCampaignLoading] = useState(true);
+  const [simulationLoading, setSimulationLoading] = useState(true);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [selectedPersonaId, setSelectedPersonaId] = useState<string>(AXIS1_TYPES[0]?.id ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -108,11 +118,17 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
       .finally(() => setCampaignLoading(false));
   };
 
-  useEffect(() => {
-    getCampaigns()
-      .then((items) => setCampaigns(items))
+  const loadSimulation = (force = false) => {
+    if (!campaignId) return;
+    setSimulationLoading(true);
+    getCampaignSimulation(campaignId, { force })
+      .then((response) => setSimulation(response))
       .catch((e) => setError(String(e)))
-      .finally(() => setCampaignLoading(false));
+      .finally(() => setSimulationLoading(false));
+  };
+
+  useEffect(() => {
+    loadCampaign();
   }, []);
 
   const campaign = useMemo(
@@ -128,17 +144,39 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
       .finally(() => setImagesLoading(false));
   }, [campaignId]);
 
+  useEffect(() => {
+    loadSimulation(false);
+  }, [campaignId]);
+
   const orderedImages = useMemo(() => orderImagesByAxis1(images), [images]);
-  const matchingRows = useMemo(
-    () => (campaign ? buildMatchingRows(campaign, images) : []),
-    [campaign, images]
-  );
+  const matchingRows = useMemo(() => {
+    const simulationRows = Object.fromEntries(
+      (simulation?.rows ?? []).map((row) => [row.type_id, row])
+    );
+    return AXIS1_TYPES.map((type, index) => {
+      const row = simulationRows[type.id];
+      return {
+        type,
+        image: orderedImages.find((item) => getAxis1Id(item) === type.id) ?? orderedImages[index] ?? null,
+        predictedClicks: row?.predicted_clicks ?? 0,
+        audience: row?.audience ?? 0,
+        ctr: row?.predicted_ctr ?? 0,
+        status: row?.status ?? "낮음",
+      };
+    }).sort((a, b) => b.ctr - a.ctr);
+  }, [orderedImages, simulation]);
 
   const selectedPersona = AXIS1_TYPE_MAP[selectedPersonaId] ?? AXIS1_TYPES[0];
   const campaignName = campaign ? inferCampaignName(campaign) : "-";
   const campaignChannel = campaign ? inferChannel(campaign) : "-";
-  const targetCount = campaign ? mockTargetCount(campaign) : 0;
+  const targetCount = simulation?.audience_total ?? 0;
   const sentCustomers = formatCount(targetCount);
+  const overallCtr = simulation ? formatPercent(simulation.overall_ctr * 100) : "-";
+  const overallClicks = simulation ? formatCount(simulation.overall_clicks) : "-";
+  const benchmarkCtr = simulation ? formatPercent(simulation.overall_ctr * 0.7 * 100) : "-";
+  const daysElapsed = campaign
+    ? Math.floor((Date.now() - new Date(campaign.created_at).getTime()) / 86_400_000)
+    : null;
 
   return (
     <div className="h-full overflow-y-auto bg-[#0B1016]">
@@ -167,11 +205,14 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={loadCampaign}
-              disabled={campaignLoading}
+              onClick={() => {
+                loadCampaign();
+                loadSimulation(true);
+              }}
+              disabled={campaignLoading || simulationLoading}
               className="flex items-center gap-2 rounded-full border border-white/15 px-5 py-3 text-sm text-white/80 transition-colors hover:text-white disabled:opacity-40"
             >
-              <RefreshCw size={14} className={campaignLoading ? "animate-spin" : ""} />
+              <RefreshCw size={14} className={campaignLoading || simulationLoading ? "animate-spin" : ""} />
               새로고침
             </button>
             <button className="rounded-full bg-[#E8E8E6] px-6 py-3 text-sm font-medium text-[#131313]">
@@ -230,21 +271,23 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
             <section>
               <h2 className="mb-5 text-[28px] font-semibold tracking-[-0.03em] text-white">성과 리포트</h2>
               <div className="grid gap-4 xl:grid-cols-3">
-                <StatCard title="발송 고객" value={sentCustomers} tone="dark" />
-                <StatCard title="전체 CTR" value="10.8%" tone="blue" />
-                <StatCard title="전환율(CVR)" value="1.35%" tone="lime" />
+                <StatCard title="발송 고객" value={sentCustomers} tone="dark" description="26년도 4월 기준 모니모 MAU" />
+                <StatCard title="클릭 수" value={overallClicks} tone="lime" description={daysElapsed !== null ? `캠페인 실행 후 ${daysElapsed}일 경과` : undefined} />
+                <StatCard title="전체 CTR" value={overallCtr} tone="blue" description={`공통 이미지 캠페인 진행 시 CTR 예상 ${benchmarkCtr}`} />
               </div>
 
               <div className="mt-5 grid gap-4 xl:grid-cols-[1.25fr_0.95fr]">
                 <div className="rounded-[30px] bg-[#575757] px-5 py-5 text-white">
                   <div className="mb-5 flex items-center justify-between">
                     <h3 className="text-[17px] font-semibold">이미지별 매칭 현황</h3>
-                    <span className="text-xs text-white/65">프로토타입 지표</span>
+                    <span className="text-xs text-white/65">
+                      {simulationLoading ? "시뮬레이션 계산 중" : simulation?.simulation_version ?? "시뮬레이션"}
+                    </span>
                   </div>
                   <div className="hidden grid-cols-[88px_1.5fr_0.78fr_0.5fr_0.56fr] gap-3 border-b border-white/12 pb-3 text-[11px] text-white/65 md:grid">
                     <span>유형</span>
                     <span>고객군</span>
-                    <span>매칭 수</span>
+                    <span>예상 클릭 수</span>
                     <span>CTR</span>
                     <span>상태</span>
                   </div>
@@ -261,8 +304,8 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
                           <p className="text-[16px] font-medium leading-snug">{row.type.name}</p>
                           <p className="mt-0.5 text-[11px] text-white/65">{row.type.englishName}</p>
                         </div>
-                        <p className="text-[16px] font-medium">{formatCount(row.matchedCount)}</p>
-                        <p className="text-[16px] font-medium">{formatPercent(row.ctr)}</p>
+                        <p className="text-[16px] font-medium">{formatCount(row.predictedClicks)}</p>
+                        <p className="text-[16px] font-medium">{formatPercent(row.ctr * 100)}</p>
                         <div>
                           <StatusPill status={row.status} />
                         </div>

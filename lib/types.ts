@@ -141,3 +141,28 @@ export interface Campaign {
   height: number;
   status: string;
 }
+
+export interface CampaignSimulationRow {
+  type_id: string;
+  type_name: string;
+  audience: number;
+  sample_size: number;
+  predicted_ctr: number;
+  predicted_clicks: number;
+  avg_similarity: number;
+  avg_click_probability: number;
+  image_id?: string | null;
+  image_tag?: string | null;
+  image_analysis?: Record<string, unknown> | null;
+  status: string;
+}
+
+export interface CampaignSimulationResponse {
+  campaign_id: string;
+  simulation_version: string;
+  audience_total: number;
+  overall_ctr: number;
+  overall_clicks: number;
+  sample_size: number;
+  rows: CampaignSimulationRow[];
+}
