@@ -202,7 +202,7 @@ export default function GalleryPage() {
         <div className="mx-auto max-w-[1420px] px-8 py-7">
 
           {/* 헤더 */}
-          <div className="mb-8 flex items-end justify-between gap-6">
+          <div className="mb-8 flex items-start justify-between gap-6">
             <div>
               <p className="text-[13px] uppercase tracking-[0.24em] text-[var(--text-secondary)]">
                 Image Gallery
@@ -219,38 +219,44 @@ export default function GalleryPage() {
               <button
                 onClick={(e) => { e.stopPropagation(); load(sort); }}
                 disabled={loading}
-                className="flex items-center gap-2 rounded-full border border-white/15 px-4 py-2.5 text-sm text-white/70 transition-colors hover:text-white disabled:opacity-40"
+                className="flex items-center gap-2 rounded-full border border-white/15 px-5 py-3 text-sm text-white/80 transition-colors hover:text-white disabled:opacity-40"
               >
                 <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+                새로고침
               </button>
+              <button className="rounded-full bg-[#E8E8E6] px-6 py-3 text-sm font-medium text-[#131313]">
+                C2012531
+              </button>
+            </div>
+          </div>
 
-              <div className="relative" onClick={(e) => e.stopPropagation()}>
-                <button
-                  onClick={() => setSortOpen((p) => !p)}
-                  className="flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm text-white transition-colors hover:bg-white/8"
-                >
-                  {currentSortLabel}
-                  <ChevronDown size={14} className={`transition-transform ${sortOpen ? "rotate-180" : ""}`} />
-                </button>
-                {sortOpen && (
-                  <div className="absolute right-0 top-full z-20 mt-2 w-40 rounded-2xl border border-white/10 bg-[#1a1a18] py-1.5 shadow-xl">
-                    {SORT_OPTIONS.map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => handleSort(opt.value)}
-                        className={`w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-white/6 ${
-                          sort === opt.value ? "text-[var(--accent-lime)]" : "text-white/80"
-                        }`}
-                      >
-                        {opt.label}
+          {/* 정렬 컨트롤 */}
+          <div className="mb-6 flex justify-end" onClick={(e) => e.stopPropagation()}>
+            <div className="relative">
+              <button
+                onClick={() => setSortOpen((p) => !p)}
+                className="flex items-center gap-2.5 rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm text-white transition-colors hover:bg-white/8"
+              >
+                {currentSortLabel}
+                <ChevronDown size={14} className={`transition-transform ${sortOpen ? "rotate-180" : ""}`} />
+              </button>
+              {sortOpen && (
+                <div className="absolute right-0 top-full z-20 mt-2 w-40 rounded-2xl border border-white/10 bg-[#1a1a18] py-1.5 shadow-xl">
+                  {SORT_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleSort(opt.value)}
+                      className={`w-full px-4 py-2.5 text-left text-sm transition-colors hover:bg-white/6 ${
+                        sort === opt.value ? "text-[var(--accent-lime)]" : "text-white/80"
+                      }`}
+                    >
+                      {opt.label}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
             </div>
-          </div>
-
           {error && (
             <div className="mb-6 rounded-[20px] border border-red-400/20 bg-red-400/10 px-5 py-4 text-sm text-red-300">
               {error}

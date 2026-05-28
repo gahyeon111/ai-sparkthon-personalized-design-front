@@ -10,7 +10,7 @@ import {
   type EntityItem,
   type EntityType,
 } from "@/lib/api";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, RefreshCw, Trash2, X } from "lucide-react";
 
 // ─── Tab config ───────────────────────────────────────────────────────────────
 
@@ -510,16 +510,31 @@ export default function EntitiesPage() {
         <div className="mx-auto max-w-[1420px] px-8 py-7">
 
           {/* 헤더 */}
-          <div className="mb-8">
-            <p className="text-[13px] uppercase tracking-[0.24em] text-[var(--text-secondary)]">
-              Entity Data
-            </p>
-            <h1 className="mt-3 text-[42px] font-semibold leading-none tracking-[-0.04em] text-white">
-              브랜드 & 혜택 데이터
-            </h1>
-            <p className="mt-3 text-[14px] text-[var(--text-secondary)]">
-              이미지 생성에 사용되는 브랜드, 서비스, 혜택 데이터를 확인하고 항목을 추가합니다.
-            </p>
+          <div className="mb-8 flex items-start justify-between gap-6">
+            <div>
+              <p className="text-[13px] uppercase tracking-[0.24em] text-[var(--text-secondary)]">
+                Entity Data
+              </p>
+              <h1 className="mt-3 text-[42px] font-semibold leading-none tracking-[-0.04em] text-white">
+                브랜드 & 혜택 데이터
+              </h1>
+              <p className="mt-3 text-[14px] text-[var(--text-secondary)]">
+                이미지 생성에 사용되는 브랜드, 서비스, 혜택 데이터를 확인하고 항목을 추가합니다.
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-3">
+              <button
+                onClick={() => load(activeTab)}
+                disabled={loading}
+                className="flex items-center gap-2 rounded-full border border-white/15 px-5 py-3 text-sm text-white/80 transition-colors hover:text-white disabled:opacity-40"
+              >
+                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+                새로고침
+              </button>
+              <button className="rounded-full bg-[#E8E8E6] px-6 py-3 text-sm font-medium text-[#131313]">
+                C2012531
+              </button>
+            </div>
           </div>
 
           {/* 탭 */}
