@@ -8,7 +8,8 @@ import type {
   Preset,
 } from "./types";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const REQUEST_TIMEOUT_MS = 180_000;
 const MAX_RETRIES = 2;
 
@@ -17,7 +18,7 @@ export function resolveImageUrl(url: string | null | undefined): string {
   if (!url) return "";
 
   if (url.startsWith("/static/")) {
-    return `${BASE}${url}`;
+    return `${API_BASE_URL}${url}`;
   }
 
   if (url.includes("cloud.comfy.org") || url.includes("/api/view")) {
@@ -25,7 +26,7 @@ export function resolveImageUrl(url: string | null | undefined): string {
       const parsed = new URL(url);
       const filename = parsed.searchParams.get("filename");
       if (filename) {
-        return `${BASE}/static/view/${encodeURIComponent(filename)}`;
+        return `${API_BASE_URL}/static/view/${encodeURIComponent(filename)}`;
       }
     } catch {
       // fall through
@@ -46,7 +47,7 @@ function toFriendlyError(error: unknown): Error {
     }
     if (error.message === "Failed to fetch") {
       return new Error(
-        "백엔드 서버에 연결할 수 없습니다. http://localhost:8000 이 실행 중인지 확인해주세요."
+        `백엔드 서버에 연결할 수 없습니다. ${API_BASE_URL} 서버 상태를 확인해주세요.`
       );
     }
     return error;
@@ -65,7 +66,7 @@ async function request<T>(
     const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
     try {
-      const res = await fetch(`${BASE}${path}`, {
+      const res = await fetch(`${API_BASE_URL}${path}`, {
         headers: { "Content-Type": "application/json" },
         ...options,
         signal: controller.signal,
@@ -257,7 +258,7 @@ export async function uploadEntityLogo(
 ): Promise<{ logo_path: string }> {
   const formData = new FormData();
   formData.append("file", file);
-  const res = await fetch(`${BASE}/api/entities/upload-logo`, {
+  const res = await fetch(`${API_BASE_URL}/api/entities/upload-logo`, {
     method: "POST",
     body: formData,
   });
@@ -270,7 +271,7 @@ export async function uploadEntityLogo(
 
 export function resolveLogoUrl(displayLogo: string | null | undefined): string {
   if (!displayLogo) return "";
-  return `${BASE}/static/logos/${displayLogo}`;
+  return `${API_BASE_URL}/static/logos/${displayLogo}`;
 }
 
 export async function uploadReferenceImage(
@@ -278,7 +279,7 @@ export async function uploadReferenceImage(
 ): Promise<{ filename: string; file_path: string }> {
   const formData = new FormData();
   formData.append("file", file);
-  const res = await fetch(`${BASE}/api/chat/upload-reference`, {
+  const res = await fetch(`${API_BASE_URL}/api/chat/upload-reference`, {
     method: "POST",
     body: formData,
   });

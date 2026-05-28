@@ -5,6 +5,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
+import { API_BASE_URL } from "@/lib/api";
+
 const FEATURE_ITEMS = [
   {
     title: "캠페인 자동 분석",
@@ -111,7 +113,7 @@ export default function LandingPage() {
   const [stats, setStats] = useState(STATS_FALLBACK);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/stats`)
+    fetch(`${API_BASE_URL}/api/stats`)
       .then((r) => r.json())
       .then((data) => {
         setStats([
