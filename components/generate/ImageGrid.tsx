@@ -16,6 +16,8 @@ interface Props {
   idleMessage?: string;
   completed?: number;
   total?: number;
+  /** 현재 수정 중인 이미지 ID — 해당 카드에 로딩 오버레이 표시 */
+  editingImageId?: string | null;
 }
 
 export default function ImageGrid({
@@ -29,6 +31,7 @@ export default function ImageGrid({
   idleMessage,
   completed = 0,
   total = 0,
+  editingImageId = null,
 }: Props) {
   if (images.length === 0 && !isLoading && !idleMessage) return null;
 
@@ -89,6 +92,8 @@ export default function ImageGrid({
             const isDone = img.status === "done" && img.image_url;
             const clickable = isDone && canSelect && !!onSelect;
 
+            const isEditing = img.id === editingImageId;
+
             return (
               <motion.div
                 key={img.id}
@@ -101,6 +106,8 @@ export default function ImageGrid({
                 } ${
                   isSelected
                     ? "border-[var(--accent)] shadow-lg shadow-[var(--accent)]/20"
+                    : isEditing
+                    ? "border-[var(--accent-lime)]/60"
                     : clickable
                     ? "border-[var(--border)] hover:border-[var(--accent)]/50"
                     : "border-[var(--border)]"
@@ -124,8 +131,20 @@ export default function ImageGrid({
                   )}
                 </div>
 
+                {/* 수정 중 로딩 오버레이 */}
+                {isEditing && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-2 pointer-events-none"
+                  >
+                    <Loader2 size={24} className="animate-spin text-[var(--accent-lime)]" />
+                    <span className="text-[10px] text-[var(--accent-lime)] font-medium">수정 중...</span>
+                  </motion.div>
+                )}
+
                 {/* 선택 오버레이 */}
-                {isSelected && (
+                {isSelected && !isEditing && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -144,7 +163,7 @@ export default function ImageGrid({
                 </div>
 
                 {/* 선택 뱃지 */}
-                {isSelected && (
+                {isSelected && !isEditing && (
                   <div className="absolute top-2 right-2 bg-[var(--accent)] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
                     선택됨
                   </div>

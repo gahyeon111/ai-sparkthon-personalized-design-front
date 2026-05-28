@@ -20,7 +20,7 @@ export default function ChannelInfo({ channel }: Props) {
     >
       <h3 className="text-[15px] font-semibold text-[var(--accent-lime)]">채널</h3>
       <div className="inline-flex items-center gap-5 rounded-[18px] border border-[var(--border)] bg-[#1d1d1c] px-7 py-5 text-sm">
-        <span className="text-[var(--text-secondary)]">앱 배너</span>
+        <span className="text-[var(--text-secondary)]">{channel}</span>
         <span className="text-sm font-medium text-[var(--text-primary)]">
           {size.width} X {size.height}
         </span>

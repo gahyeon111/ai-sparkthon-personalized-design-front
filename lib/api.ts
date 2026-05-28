@@ -252,6 +252,22 @@ export async function deleteEntity(
   });
 }
 
+export async function uploadEntityLogo(
+  file: File
+): Promise<{ logo_path: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${BASE}/api/entities/upload-logo`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`로고 업로드 실패: ${text}`);
+  }
+  return res.json();
+}
+
 export function resolveLogoUrl(displayLogo: string | null | undefined): string {
   if (!displayLogo) return "";
   return `${BASE}/static/logos/${displayLogo}`;

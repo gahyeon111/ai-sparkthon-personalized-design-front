@@ -70,6 +70,7 @@ export default function GeneratePage() {
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [editPollState, setEditPollState] = useState<EditPollState | null>(null);
+  const [editingImageId, setEditingImageId] = useState<string | null>(null);
   const isEditInProgress = editPollState !== null;
   // 이미지 선택·편집은 모든 이미지가 완전히 완료되고, 수정 중/검수 중이 아닐 때만 가능
   const canSelectImage = campaignStatus === "done" && step === "edit" && !isEditInProgress;
@@ -170,6 +171,7 @@ export default function GeneratePage() {
     const poll = async () => {
       if (Date.now() - editPollState.startedAt > TIMEOUT) {
         setEditPollState(null);
+        setEditingImageId(null);
         return;
       }
       try {
@@ -185,6 +187,7 @@ export default function GeneratePage() {
         );
         if (editCompleted) {
           setEditPollState(null);
+          setEditingImageId(null);
           setMessages((prev) => {
             if (prev.some((m) => m.id === `edit-done-${editPollState.startedAt}`)) return prev;
             return [
@@ -330,6 +333,7 @@ export default function GeneratePage() {
             startedAt: Date.now(),
             imageUrls: Object.fromEntries(images.map((img) => [img.id, img.image_url ?? null])),
           });
+          setEditingImageId(activeSelectedImageId ?? null);
         }
         if (res.campaign_id) setCampaignId((prev) => prev ?? res.campaign_id ?? null);
         if (res.presets?.length) {
@@ -531,6 +535,7 @@ export default function GeneratePage() {
                   }
                   completed={generationProgress.completed}
                   total={generationProgress.total}
+                  editingImageId={editingImageId}
                 />
               </motion.div>
             )}

@@ -23,6 +23,15 @@ const USAGE_OPTIONS: { value: RefImageUsage; label: string }[] = [
   { value: "COLOR_REFERENCE", label: "색감 참고" },
 ];
 
+/** 텍스트 기반으로 usage 추론 — 매칭 안 되면 STYLE_REFERENCE 기본값 */
+function inferUsageFromText(text: string): RefImageUsage {
+  const t = text.toLowerCase();
+  if (t.includes("로고") || t.includes("logo")) return "LOGO_EXTRACTION";
+  if (t.includes("구도") || t.includes("레이아웃") || t.includes("layout") || t.includes("composition")) return "COMPOSITION_REFERENCE";
+  if (t.includes("색") || t.includes("컬러") || t.includes("color") || t.includes("palette")) return "COLOR_REFERENCE";
+  return "STYLE_REFERENCE";
+}
+
 interface Props {
   onSend: (message: string, attachments?: AttachedImage[]) => void;
   disabled?: boolean;
@@ -53,6 +62,21 @@ export default function ChatInput({
   const handleSubmit = () => {
     const trimmed = value.trim();
     if (!trimmed || disabled) return;
+
+    // 이미지 첨부 후 usage 선택 없이 텍스트로 입력하는 경우:
+    // 텍스트를 그대로 전송하고, pendingFile은 STYLE_REFERENCE 기본값으로 포함
+    if (pendingFile && showUsagePicker) {
+      const previewUrl = URL.createObjectURL(pendingFile);
+      const inferredUsage = inferUsageFromText(trimmed);
+      const newAttachment: AttachedImage = { file: pendingFile, previewUrl, usage_type: inferredUsage };
+      onSend(trimmed, [...attachments, newAttachment]);
+      setValue("");
+      setAttachments([]);
+      setPendingFile(null);
+      setShowUsagePicker(false);
+      return;
+    }
+
     onSend(trimmed, attachments.length > 0 ? attachments : undefined);
     setValue("");
     setAttachments([]);
@@ -77,7 +101,14 @@ export default function ChatInput({
   const confirmUsage = (usage: RefImageUsage) => {
     if (!pendingFile) return;
     const previewUrl = URL.createObjectURL(pendingFile);
-    setAttachments((prev) => [...prev, { file: pendingFile, previewUrl, usage_type: usage }]);
+    const newAttachment: AttachedImage = { file: pendingFile, previewUrl, usage_type: usage };
+    const currentText = value.trim();
+    // 텍스트가 이미 있으면 이미지와 함께 즉시 전송, 없으면 usage 라벨을 기본 메시지로 전송
+    const messageToSend =
+      currentText || USAGE_OPTIONS.find((o) => o.value === usage)?.label || "참조 이미지";
+    onSend(messageToSend, [...attachments, newAttachment]);
+    setValue("");
+    setAttachments([]);
     setPendingFile(null);
     setShowUsagePicker(false);
   };
@@ -138,11 +169,13 @@ export default function ChatInput({
             exit={{ opacity: 0, y: 6 }}
             className="mb-3 rounded-[24px] border border-[#41413d] bg-[#12171e] p-4"
           >
-            <div className="flex items-center gap-2 mb-2">
-              <ImageIcon size={13} className="text-[var(--text-secondary)]" />
-              <span className="text-xs text-[var(--text-secondary)]">
-                <span className="text-[var(--text-primary)] font-medium">{pendingFile.name}</span>
-                — 이미지 활용 방식을 선택하세요
+            <div className="flex items-center gap-2 mb-2 min-w-0">
+              <ImageIcon size={13} className="shrink-0 text-[var(--text-secondary)]" />
+              <span className="text-xs text-[var(--text-secondary)] min-w-0 flex items-center gap-1 flex-wrap">
+                <span className="text-[var(--text-primary)] font-medium max-w-[160px] truncate block" title={pendingFile.name}>
+                  {pendingFile.name}
+                </span>
+                <span className="shrink-0">— 이미지 활용 방식을 선택하세요</span>
               </span>
             </div>
             <div className="flex gap-2 flex-wrap">

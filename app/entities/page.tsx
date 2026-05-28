@@ -7,10 +7,11 @@ import {
   addEntity,
   deleteEntity,
   resolveLogoUrl,
+  uploadEntityLogo,
   type EntityItem,
   type EntityType,
 } from "@/lib/api";
-import { Plus, RefreshCw, Trash2, X } from "lucide-react";
+import { ImagePlus, Plus, RefreshCw, Trash2, X } from "lucide-react";
 
 // ─── Tab config ───────────────────────────────────────────────────────────────
 
@@ -87,6 +88,8 @@ function EntityDetailModal({
             <img
               src={logoSrc}
               alt={item.name_en}
+              loading="lazy"
+              decoding="async"
               className="max-h-[55%] max-w-[55%] object-contain"
             />
           ) : (
@@ -247,6 +250,8 @@ function EntityCard({
           <img
             src={logoSrc}
             alt={item.name_en}
+            loading="lazy"
+            decoding="async"
             className="max-h-[65%] max-w-[65%] object-contain"
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
@@ -315,6 +320,8 @@ function BenefitCard({
 
 // ─── Add modal ────────────────────────────────────────────────────────────────
 
+const LOGO_TABS: EntityType[] = ["brands", "services", "samsungcards"];
+
 function AddModal({
   tab,
   onClose,
@@ -327,13 +334,37 @@ function AddModal({
   const [form, setForm] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const set = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+    e.target.value = "";
+  };
+
+  const removeLogo = () => {
+    if (logoPreview) URL.revokeObjectURL(logoPreview);
+    setLogoFile(null);
+    setLogoPreview(null);
+  };
 
   const handleSubmit = async () => {
     setError(null);
     setSaving(true);
     try {
+      // 로고가 있으면 먼저 업로드
+      let display_logo: string | undefined;
+      if (logoFile && LOGO_TABS.includes(tab)) {
+        const { logo_path } = await uploadEntityLogo(logoFile);
+        display_logo = logo_path;
+      }
+
       const aliases = form.aliases
         ? form.aliases.split(",").map((s) => s.trim()).filter(Boolean)
         : [];
@@ -344,16 +375,16 @@ function AddModal({
       let body: Record<string, unknown> = {};
       if (tab === "brands") {
         if (!form.entity_id || !form.name_kr) throw new Error("ID와 한국어 이름은 필수입니다");
-        body = { entity_id: form.entity_id, name_kr: form.name_kr, name_en: form.name_en || "", aliases, key_color: form.key_color, definition: form.definition, image_hint: form.image_hint };
+        body = { entity_id: form.entity_id, name_kr: form.name_kr, name_en: form.name_en || "", aliases, key_color: form.key_color, definition: form.definition, image_hint: form.image_hint, display_logo };
       } else if (tab === "services") {
         if (!form.entity_id || !form.name_kr) throw new Error("ID와 한국어 이름은 필수입니다");
-        body = { entity_id: form.entity_id, name_kr: form.name_kr, name_en: form.name_en || "", aliases, key_color: form.key_color, definition: form.definition };
+        body = { entity_id: form.entity_id, name_kr: form.name_kr, name_en: form.name_en || "", aliases, key_color: form.key_color, definition: form.definition, display_logo };
       } else if (tab === "benefits") {
         if (!form.entity_id || !form.name_kr) throw new Error("ID와 한국어 이름은 필수입니다");
         body = { entity_id: form.entity_id, name_kr: form.name_kr, name_en: form.name_en || "", trigger_keywords: keywords, description: form.description, icon_hint: form.icon_hint };
       } else if (tab === "samsungcards") {
         if (!form.entity_id || !form.brand_name) throw new Error("ID와 브랜드명은 필수입니다");
-        body = { entity_id: form.entity_id, brand_name: form.brand_name, category: form.category, trigger_keywords: keywords, key_color: form.key_color, definition: form.definition };
+        body = { entity_id: form.entity_id, brand_name: form.brand_name, category: form.category, trigger_keywords: keywords, key_color: form.key_color, definition: form.definition, display_logo };
       }
       await addEntity(tab, body);
       onAdded();
@@ -413,6 +444,58 @@ function AddModal({
         <h2 className="mt-1 text-[20px] font-semibold text-white">{tabLabel} 항목 추가</h2>
 
         <div className="mt-5 flex flex-col gap-4">
+          {/* 로고 업로드 (브랜드/서비스/삼성카드만) */}
+          {LOGO_TABS.includes(tab) && (
+            <div>
+              <label className="mb-1.5 block text-[12px] text-[var(--text-secondary)]">로고 이미지</label>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleLogoChange}
+              />
+              {logoPreview ? (
+                <div className="relative inline-flex items-center gap-3">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={logoPreview}
+                    alt="로고 미리보기"
+                    className="h-16 w-16 rounded-xl object-contain bg-[#e8e8e6] p-1"
+                  />
+                  <div className="flex flex-col gap-1">
+                    <p className="text-[12px] text-white/70 max-w-[180px] truncate">{logoFile?.name}</p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => logoInputRef.current?.click()}
+                        className="text-[11px] text-[var(--accent)] hover:underline"
+                      >
+                        변경
+                      </button>
+                      <button
+                        type="button"
+                        onClick={removeLogo}
+                        className="text-[11px] text-white/40 hover:text-white/70"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="flex items-center gap-2 rounded-xl border border-dashed border-white/15 px-4 py-3 text-[13px] text-white/40 transition-colors hover:border-white/30 hover:text-white/70"
+                >
+                  <ImagePlus size={16} />
+                  로고 이미지 업로드
+                </button>
+              )}
+            </div>
+          )}
+          {/* 텍스트 필드들 */}
           {fields.map((f) => (
             <div key={f.key}>
               <label className="mb-1.5 block text-[12px] text-[var(--text-secondary)]">{f.label}</label>
@@ -455,7 +538,7 @@ function AddModal({
             disabled={saving}
             className="flex-1 rounded-full bg-[var(--accent)] py-2.5 text-[14px] font-medium text-white transition-opacity hover:opacity-80 disabled:opacity-40"
           >
-            {saving ? "저장 중..." : "추가하기"}
+            {saving ? (logoFile ? "업로드 중..." : "저장 중...") : "추가하기"}
           </button>
         </div>
       </div>
@@ -610,7 +693,7 @@ export default function EntitiesPage() {
       {/* FAB */}
       <button
         onClick={() => setShowAdd(true)}
-        className="fixed bottom-8 right-8 flex items-center gap-3 rounded-full bg-[var(--bg-card)] border border-white/15 px-6 py-3.5 text-[14px] font-medium text-white shadow-xl transition-all hover:bg-white/10 hover:border-white/25 active:scale-95"
+        className="fixed bottom-8 right-8 flex items-center gap-3 rounded-full bg-[var(--bg-card)] border border-white/15 px-6 py-3.5 text-[14px] font-medium text-white shadow-xl transition-all hover:bg-[var(--border)] hover:border-white/30 active:scale-95"
       >
         <Plus size={18} />
         추가하기

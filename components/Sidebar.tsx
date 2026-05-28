@@ -35,7 +35,7 @@ export default function Sidebar() {
   return (
     <aside className="flex h-full w-[280px] shrink-0 flex-col border-r border-[var(--border)] bg-[var(--bg-primary)]">
       {/* 로고 */}
-      <div className="px-5 py-6">
+      <Link href="/" className="block px-5 py-6">
         <Image
           src="/gen-ai-designer-logo.png"
           alt="GEN AI DESIGNER"
@@ -44,7 +44,7 @@ export default function Sidebar() {
           className="h-auto w-[170px]"
           priority
         />
-      </div>
+      </Link>
 
       {/* 네비게이션 */}
       <nav className="flex flex-1 flex-col gap-1 px-4 py-3">
