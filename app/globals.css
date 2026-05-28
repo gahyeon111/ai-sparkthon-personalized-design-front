@@ -22,12 +22,29 @@ body {
   height: 100%;
 }
 
+html {
+  font-weight: 500;
+}
+
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI",
+  font-family:
+    "Pretendard Variable",
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
     sans-serif;
+  font-weight: 500;
+  font-synthesis: none;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 영문·숫자·한글 동일 굵기 유지 (font-normal=400로 얇아지는 것 방지) */
+.font-normal {
+  font-weight: 500;
 }
 
 .home-orb-grid {

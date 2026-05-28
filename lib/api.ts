@@ -8,6 +8,8 @@ import type {
 } from "./types";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const REQUEST_TIMEOUT_MS = 180_000;
+const MAX_RETRIES = 2;
 
 /** Backend static cache or ComfyUI URL → browser-loadable URL */
 export function resolveImageUrl(url: string | null | undefined): string {
@@ -36,19 +38,63 @@ export function resolveImageUrl(url: string | null | undefined): string {
   return url;
 }
 
+function toFriendlyError(error: unknown): Error {
+  if (error instanceof Error) {
+    if (error.name === "AbortError") {
+      return new Error("요청 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.");
+    }
+    if (error.message === "Failed to fetch") {
+      return new Error(
+        "백엔드 서버에 연결할 수 없습니다. http://localhost:8000 이 실행 중인지 확인해주세요."
+      );
+    }
+    return error;
+  }
+  return new Error("알 수 없는 오류가 발생했습니다.");
+}
+
 async function request<T>(
   path: string,
   options?: RequestInit
 ): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`API ${path} → ${res.status}: ${text}`);
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(`${BASE}${path}`, {
+        headers: { "Content-Type": "application/json" },
+        ...options,
+        signal: controller.signal,
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`API ${path} → ${res.status}: ${text}`);
+      }
+
+      return (await res.json()) as T;
+    } catch (error) {
+      lastError = error;
+      const friendly = toFriendlyError(error);
+      const shouldRetry =
+        attempt < MAX_RETRIES &&
+        (friendly.message.includes("연결할 수 없습니다") ||
+          friendly.message.includes("시간이 초과"));
+
+      if (!shouldRetry) {
+        throw friendly;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
-  return res.json() as Promise<T>;
+
+  throw toFriendlyError(lastError);
 }
 
 // ─── Chat ─────────────────────────────────────────────────────────────────
@@ -117,10 +163,15 @@ export async function getCopyRecommendations(
     confirmed_presets: Preset[];
   }
 ): Promise<CopyRecommendationResponse> {
-  return request("/api/campaign/copy-recommendations", {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+  try {
+    return await request("/api/campaign/copy-recommendations", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  } catch {
+    // 부가 기능 — 백엔드 재시작/일시 장애 시 UI 흐름은 유지
+    return { items: [] };
+  }
 }
 
 // ─── Postprocess ──────────────────────────────────────────────────────────

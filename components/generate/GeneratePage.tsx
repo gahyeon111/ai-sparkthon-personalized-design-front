@@ -151,8 +151,8 @@ export default function GeneratePage() {
         if (status.campaign_status === "done" || status.campaign_status === "failed") {
           stop(status.campaign_status);
         }
-      } catch (e) {
-        console.error("이미지 상태 조회 실패", e);
+      } catch {
+        // 폴링 중 일시적 연결 실패는 무시 (다음 주기에 재시도)
       }
     };
 
@@ -220,8 +220,7 @@ export default function GeneratePage() {
         if (!cancelled) {
           setRecommendedCopies(response.items);
         }
-      } catch (error) {
-        console.error("추천 문구 생성 실패", error);
+      } catch {
         if (!cancelled) {
           setRecommendedCopies([]);
         }
@@ -241,6 +240,10 @@ export default function GeneratePage() {
   const handleSend = useCallback(
     async (message: string, attachments?: AttachedImage[]) => {
       if (!sessionId || isLoading) return;
+      const trimmedMessage = message.trim();
+      const isDirectGenerateTrigger = step === "ref_image_query" && trimmedMessage === "바로 생성";
+      const isConfirmGenerate = step === "preset_confirm" && trimmedMessage === "확인";
+      const GENERATING_CHAT_MESSAGE = "이미지를 생성중입니다. 잠시만 기다려 주세요";
 
       // 첨부 파일을 표시용 텍스트로 변환
       const attachmentLabel =
@@ -259,8 +262,33 @@ export default function GeneratePage() {
         content: "",
       };
 
-      setMessages((prev) => [...prev, userMsg, loadingMsg]);
+      const analyzingMsg: DisplayMessage = {
+        id: `a-analyzing-${Date.now()}`,
+        role: "assistant",
+        content: "입력하신 캠페인을 분석하여, 대상고객을 그룹핑 하고 있어요.",
+      };
+
+      const generatingMsg: DisplayMessage = {
+        id: `a-generating-${Date.now()}`,
+        role: "assistant",
+        content: GENERATING_CHAT_MESSAGE,
+      };
+
+      setMessages((prev) =>
+        isDirectGenerateTrigger
+          ? [...prev, userMsg, analyzingMsg, loadingMsg]
+          : isConfirmGenerate
+          ? [...prev, userMsg, generatingMsg]
+          : [...prev, userMsg, loadingMsg]
+      );
       setIsLoading(true);
+      if (isDirectGenerateTrigger) {
+        setStep("resolving");
+      }
+      if (isConfirmGenerate) {
+        setStep("generating");
+        setCampaignStatus("processing");
+      }
 
       // 첫 메시지이면 캠페인 문구로 저장
       if (step === "init") {
@@ -291,7 +319,12 @@ export default function GeneratePage() {
           reference_images: referenceImages,
         });
 
-        setStep(res.step);
+        if (isConfirmGenerate || res.step === "generating") {
+          setStep("generating");
+          setCampaignStatus("processing");
+        } else {
+          setStep(res.step);
+        }
         if (res.edit_started) {
           setEditPollState({
             startedAt: Date.now(),
@@ -307,36 +340,82 @@ export default function GeneratePage() {
         // 수정 가능 상태일 때만 검수 버튼 표시. 수정 시작 메시지에는 숨긴다.
         const showReviewButton = res.step === "edit" && !res.edit_started;
 
+        const isGeneratingPhase =
+          isConfirmGenerate ||
+          res.step === "generating" ||
+          res.reply.includes("이미지를 생성중입니다");
+
         const assistantMsg: DisplayMessage = {
           id: `a-${Date.now()}`,
           role: "assistant",
-          content: res.reply,
+          content: isGeneratingPhase
+            ? GENERATING_CHAT_MESSAGE
+            : isDirectGenerateTrigger && res.step === "preset_confirm"
+            ? "대상고객을 분석하여 6개의 이미지 조합을 구성했습니다. 이대로 이미지를 생성할까요?"
+            : res.reply,
           presets: res.presets,
           showFinalizeButton: showReviewButton,
-          channelOptions: res.channel_options,
-          quick_replies: res.quick_replies,
+          channelOptions:
+            isDirectGenerateTrigger && res.step === "preset_confirm"
+              ? undefined
+              : res.channel_options,
+          quick_replies:
+            isGeneratingPhase
+              ? undefined
+              : isDirectGenerateTrigger && res.step === "preset_confirm"
+              ? ["확인"]
+              : res.quick_replies,
         };
 
-        setMessages((prev) => [
-          ...prev.filter((m) => m.id !== loadingMsg.id),
-          assistantMsg,
-        ]);
+        setMessages((prev) => {
+          const withoutLoading = prev.filter((m) => m.id !== loadingMsg.id);
+          if (isGeneratingPhase) {
+            // 생성 중에는 고정 안내만 유지 (요청 제한 등 오류 문구 숨김)
+            const withoutRateLimit = withoutLoading.filter(
+              (m) =>
+                !(
+                  m.role === "assistant" &&
+                  m.content.includes("요청 제한")
+                )
+            );
+            const hasGenerating = withoutRateLimit.some(
+              (m) => m.content === GENERATING_CHAT_MESSAGE
+            );
+            return hasGenerating ? withoutRateLimit : [...withoutRateLimit, assistantMsg];
+          }
+          return [...withoutLoading, assistantMsg];
+        });
       } catch (e) {
         console.error("메시지 전송 실패", e);
-        setMessages((prev) => [
-          ...prev.filter((m) => m.id !== loadingMsg.id),
-          {
-            id: `err-${Date.now()}`,
-            role: "assistant",
-            content: "오류가 발생했습니다. 다시 시도해주세요.",
-          },
-        ]);
+        if (isConfirmGenerate && campaignId) {
+          setStep("generating");
+          setCampaignStatus("processing");
+          setMessages((prev) =>
+            prev.filter((m) => m.id !== loadingMsg.id)
+          );
+        } else {
+          if (isDirectGenerateTrigger) {
+            setStep("ref_image_query");
+          }
+          const errorText =
+            e instanceof Error
+              ? e.message
+              : "오류가 발생했습니다. 다시 시도해주세요.";
+          setMessages((prev) => [
+            ...prev.filter((m) => m.id !== loadingMsg.id),
+            {
+              id: `err-${Date.now()}`,
+              role: "assistant",
+              content: errorText,
+            },
+          ]);
+        }
       } finally {
         setIsLoading(false);
         setSelectedImageId(null);
       }
     },
-    [sessionId, isLoading, step, channel, activeSelectedImageId, images]
+    [sessionId, isLoading, step, channel, activeSelectedImageId, images, campaignId]
   );
 
   // 검수하기 버튼 → 채팅으로 "검수하기" 메시지 전송
@@ -373,7 +452,7 @@ export default function GeneratePage() {
 
   const imageIdleMessage =
     step === "preset_confirm" && images.length === 0
-      ? "이미지 조합을 확정한 뒤 바로 생성을 시작합니다."
+      ? "이미지 조합 확인 후 생성이 시작됩니다."
       : undefined;
 
   // 선택된 이미지 태그
@@ -448,7 +527,7 @@ export default function GeneratePage() {
                   loadingLabel={
                     step === "resolving"
                       ? "캠페인 분석과 이미지 조합을 준비 중입니다..."
-                      : "이미지를 생성하고 있습니다..."
+                      : "이미지를 생성중입니다. 잠시만 기다려 주세요"
                   }
                   completed={generationProgress.completed}
                   total={generationProgress.total}
@@ -481,14 +560,14 @@ export default function GeneratePage() {
       chat={
       <div className="flex h-full min-h-0 flex-col pl-4 pr-8 pt-7 pb-3">
         <div className="mb-2 flex shrink-0 justify-end">
-          <span className="rounded-full bg-[#E8E8E6] px-6 py-3 text-sm font-medium text-[#131313]">
+          <span className="rounded-full bg-[#5f605d] px-3 py-1.5 text-[11px] font-medium text-[#d7d8d3]">
             C2012531
           </span>
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[14px] bg-[#091018] px-4 pt-3 pb-3">
           <div className="shrink-0 px-2 pb-2">
-            <h2 className="text-[16px] font-semibold text-[var(--accent-lime)]">AI Agent 에게 요청</h2>
+            <h2 className="text-[16px] font-medium text-[var(--accent-lime)]">AI Agent 에게 요청</h2>
           </div>
 
           {/* 채팅 메시지 영역 */}
