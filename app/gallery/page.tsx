@@ -27,7 +27,7 @@ function dDayLabel(campaignCreatedAt: string): string {
 
 function ImageModal({ img, onClose }: { img: GalleryImage; onClose: () => void }) {
   const src = resolveImageUrl(img.image_url);
-  const ctr = img.overall_ctr != null ? (img.overall_ctr * 100).toFixed(1) + "%" : "—";
+  const ctr = img.image_ctr != null ? (img.image_ctr * 100).toFixed(1) + "%" : "—";
   const dday = dDayLabel(img.campaign_created_at);
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -139,7 +139,7 @@ function ImageModal({ img, onClose }: { img: GalleryImage; onClose: () => void }
 
 function ImageCard({ img, onClick }: { img: GalleryImage; onClick: () => void }) {
   const src = resolveImageUrl(img.image_url);
-  const ctr = img.overall_ctr != null ? (img.overall_ctr * 100).toFixed(1) + "%" : "—";
+  const ctr = img.image_ctr != null ? (img.image_ctr * 100).toFixed(1) + "%" : "—";
   const dday = dDayLabel(img.campaign_created_at);
   const shortId = img.campaign_id.slice(0, 10).toUpperCase();
 

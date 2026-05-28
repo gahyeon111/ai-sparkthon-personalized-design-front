@@ -176,14 +176,11 @@ export default function ChatInput({
 
       {/* 선택된 이미지 표시 (수정 모드) */}
       {selectedImageTag && (
-        <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="mb-3 flex items-center gap-2">
           <div className="flex items-center gap-1.5 rounded-full border border-[var(--accent-lime)]/30 bg-[var(--accent-lime)]/10 px-3 py-1.5 text-xs text-[var(--accent-lime)]">
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" />
             수정 대상: {selectedImageTag}
           </div>
-          <span className="shrink-0 text-[10px] text-[var(--text-secondary)]">
-            📎 이미지 첨부 시 합성 모드
-          </span>
         </div>
       )}
 

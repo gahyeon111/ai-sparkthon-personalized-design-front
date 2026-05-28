@@ -198,7 +198,7 @@ export interface GalleryImage {
   created_at: string;
   campaign_text: string;
   campaign_status: string;
-  overall_ctr: number | null;
+  image_ctr: number | null;
   campaign_created_at: string;
   image_prompt: string;
 }

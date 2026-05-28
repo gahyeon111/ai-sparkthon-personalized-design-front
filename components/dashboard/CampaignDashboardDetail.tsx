@@ -145,8 +145,17 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
   }, [campaignId]);
 
   useEffect(() => {
+    if (!campaignId || imagesLoading) return;
+
+    const hasCompletedImages = images.some((image) => Boolean(image.image_url));
+    if (!hasCompletedImages) {
+      setSimulation(null);
+      setSimulationLoading(false);
+      return;
+    }
+
     loadSimulation(false);
-  }, [campaignId]);
+  }, [campaignId, images, imagesLoading]);
 
   const orderedImages = useMemo(() => orderImagesByAxis1(images), [images]);
   const matchingRows = useMemo(() => {
