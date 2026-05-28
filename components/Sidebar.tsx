@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { FolderKanban, LayoutDashboard, Sparkles } from "lucide-react";
+import { FolderKanban, Images, LayoutDashboard, Sparkles } from "lucide-react";
 
 const NAV_ITEMS = [
   {
@@ -16,6 +16,11 @@ const NAV_ITEMS = [
     label: "프로젝트 관리",
     href: "/projects",
     icon: FolderKanban,
+  },
+  {
+    label: "이미지 갤러리",
+    href: "/gallery",
+    icon: Images,
   },
   {
     label: "대시보드",

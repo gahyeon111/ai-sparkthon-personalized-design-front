@@ -183,6 +183,26 @@ export async function getCopyRecommendations(
   }
 }
 
+// ─── Gallery ──────────────────────────────────────────────────────────────
+
+export interface GalleryImage {
+  id: string;
+  campaign_id: string;
+  image_url: string;
+  tag: string;
+  meta: Record<string, unknown>;
+  created_at: string;
+  campaign_text: string;
+  campaign_status: string;
+  overall_ctr: number | null;
+  campaign_created_at: string;
+  image_prompt: string;
+}
+
+export async function getAllImages(sort: "ctr_desc" | "newest" = "ctr_desc"): Promise<GalleryImage[]> {
+  return request(`/api/image/all?sort=${sort}`);
+}
+
 // ─── Postprocess ──────────────────────────────────────────────────────────
 
 export async function postprocess(body: {
