@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { FolderKanban, Images, LayoutDashboard, Sparkles } from "lucide-react";
+import { Database, FolderKanban, Images, LayoutDashboard, Sparkles } from "lucide-react";
 
 const NAV_ITEMS = [
   {
@@ -26,6 +26,11 @@ const NAV_ITEMS = [
     label: "대시보드",
     href: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    label: "브랜드 & 혜택 데이터",
+    href: "/entities",
+    icon: Database,
   },
 ];
 
