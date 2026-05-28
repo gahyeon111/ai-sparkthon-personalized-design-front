@@ -176,7 +176,7 @@ export default function ChatInput({
           onKeyDown={handleKeyDown}
           disabled={disabled}
           placeholder={placeholder}
-          className="min-h-[36px] w-full resize-none bg-transparent pr-2 text-[13px] leading-relaxed text-[#1f1f1d] placeholder:text-[#8b8b84] outline-none"
+          className="min-h-[36px] w-full resize-none bg-transparent pr-2 text-[13px] font-medium leading-relaxed text-[#1f1f1d] placeholder:text-[#8b8b84] outline-none"
           style={{ maxHeight: "120px" }}
         />
 
