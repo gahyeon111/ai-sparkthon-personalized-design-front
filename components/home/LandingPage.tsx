@@ -118,7 +118,7 @@ export default function LandingPage() {
             alt="GEN AI DESIGNER"
             width={471}
             height={174}
-            className="h-auto w-[180px] sm:w-[240px] lg:w-[280px]"
+            className="h-auto w-[150px] sm:w-[200px] lg:w-[230px]"
             priority
           />
           <div />
