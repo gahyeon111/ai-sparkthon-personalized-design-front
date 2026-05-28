@@ -176,7 +176,6 @@ export default function GalleryPage() {
   const [error, setError] = useState<string | null>(null);
   const [sortOpen, setSortOpen] = useState(false);
   const [selected, setSelected] = useState<GalleryImage | null>(null);
-
   const load = (s: SortValue) => {
     setLoading(true);
     setError(null);
@@ -212,6 +211,13 @@ export default function GalleryPage() {
               </h1>
               <p className="mt-3 text-[14px] text-[var(--text-secondary)]">
                 생성된 이미지를 확인하시고, 어떤 캠페인 프롬프트가 입력되었는지 확인해세요.
+              </p>
+              <p className="mt-1.5 text-[13px] text-[var(--text-secondary)]/70">
+                클릭율(CTR) 값이 — 로 표시되는 경우{" "}
+                <Link href="/dashboard" className="underline underline-offset-2 hover:text-white transition-colors">
+                  대시보드
+                </Link>
+                에서 해당 캠페인을 먼저 확인해주세요.
               </p>
             </div>
 
