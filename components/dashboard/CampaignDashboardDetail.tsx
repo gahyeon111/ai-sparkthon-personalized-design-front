@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, RefreshCw, Users, X } from "lucide-react";
+import { ArrowLeft, Loader2, RefreshCw, X } from "lucide-react";
 import { getCampaignSimulation, getCampaigns, getImageStatus, type CampaignSummary } from "@/lib/api";
 import type { CampaignSimulationResponse, GeneratedImage } from "@/lib/types";
 import {
@@ -314,24 +314,19 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
                   </div>
                 </div>
 
-                <div className="rounded-[30px] bg-[#F3F3F0] px-5 py-5 text-[#131313]">
-                  <div className="mb-5 flex items-center justify-between">
-                    <h3 className="text-[17px] font-semibold">고객별 특성</h3>
-                    <div className="flex items-center gap-2 text-xs text-[#545454]">
-                      <Users size={14} />
-                      axis1 기반
-                    </div>
-                  </div>
-                  <div className="mb-5 flex flex-wrap gap-2.5">
+                <div className="rounded-[30px] bg-[#F3F3F0] px-6 py-7 text-[#131313] md:px-8 md:py-8">
+                  <h3 className="text-[17px] font-semibold">고객별 특성</h3>
+
+                  <div className="mt-4 flex flex-wrap gap-1.5">
                     {AXIS1_TYPES.map((type) => {
                       const isSelected = selectedPersonaId === type.id;
                       return (
                         <button
                           key={type.id}
                           onClick={() => setSelectedPersonaId(type.id)}
-                          className={`rounded-full border px-4 py-2.5 text-[16px] font-semibold transition-colors ${
+                          className={`min-w-[60px] rounded-full border px-3 py-1 text-[12px] font-semibold transition-colors ${
                             isSelected
-                              ? "border-[#2F63F6] bg-[#2F63F6] text-white"
+                              ? "border-[#2F63F6] bg-[#2F63F6] text-white shadow-[0_12px_30px_rgba(47,99,246,0.22)]"
                               : "border-[#3C3C3C] bg-white text-[#1A1A18]"
                           }`}
                         >
@@ -341,15 +336,49 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
                     })}
                   </div>
 
-                  <div className="rounded-[22px] bg-[#DADAD7] px-5 py-5">
-                    <p className="text-[21px] font-semibold">{selectedPersona?.name}</p>
-                    <p className="mt-1 text-[13px] text-[#5C5C5C]">{selectedPersona?.englishName}</p>
-                    <div className="mt-5 space-y-3 text-[15px] leading-7">
-                      <p>직업 : {selectedPersona?.occupation ?? "직장인"}</p>
-                      <p>나이 : {selectedPersona?.ageRange ?? "30대"}</p>
-                      <p>성향 : {selectedPersona?.copyTone || "실용적"}</p>
-                      <p>특징 : {selectedPersona?.behaviors?.[0] ?? selectedPersona?.description}</p>
-                      <p>비주얼 : {selectedPersona?.visualDirection}</p>
+                  <div className="mt-5 flex flex-col items-center text-center">
+                    {selectedPersona?.profileImage ? (
+                      <div className="flex justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={selectedPersona.profileImage}
+                          alt={selectedPersona.name}
+                          className="h-[148px] w-[148px] rounded-full object-cover md:h-[186px] md:w-[186px]"
+                        />
+                      </div>
+                    ) : null}
+
+                    <p className="mt-4 text-[16px] font-semibold tracking-[-0.03em] text-[#111111] md:text-[21px]">
+                      {selectedPersona ? `${selectedPersona.index + 1}. ${selectedPersona.displayName}` : ""}
+                    </p>
+
+                    <div className="mt-4 w-full rounded-[22px] bg-[#E3E0E0] px-4 py-4 text-left md:px-6 md:py-5">
+                      <div className="space-y-2.5">
+                        <div className="grid grid-cols-[64px_1fr] items-start gap-3 md:grid-cols-[76px_1fr]">
+                          <p className="text-[11px] font-semibold text-[#8A8A8A] md:text-[13px]">직업</p>
+                          <p className="text-[12px] font-semibold text-[#111111] md:text-[15px]">
+                            {selectedPersona?.occupation ?? "직장인"}
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-[64px_1fr] items-start gap-3 md:grid-cols-[76px_1fr]">
+                          <p className="text-[11px] font-semibold text-[#8A8A8A] md:text-[13px]">나이</p>
+                          <p className="text-[12px] font-semibold text-[#111111] md:text-[15px]">
+                            {selectedPersona?.ageRange ?? "30대"}
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-[64px_1fr] items-start gap-3 md:grid-cols-[76px_1fr]">
+                          <p className="text-[11px] font-semibold text-[#8A8A8A] md:text-[13px]">성별</p>
+                          <p className="text-[12px] font-semibold text-[#111111] md:text-[15px]">
+                            {selectedPersona?.gender ?? "여성"}
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-[64px_1fr] items-start gap-3 md:grid-cols-[76px_1fr]">
+                          <p className="text-[11px] font-semibold text-[#8A8A8A] md:text-[13px]">특징</p>
+                          <p className="text-[12px] font-semibold leading-[1.5] text-[#111111] md:text-[15px]">
+                            {selectedPersona?.behaviors?.slice(0, 2).join(", ") ?? selectedPersona?.description}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

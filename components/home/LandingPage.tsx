@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 const FEATURE_ITEMS = [
   {
@@ -22,9 +23,9 @@ const FEATURE_ITEMS = [
   },
 ];
 
-const STATS = [
+const STATS_FALLBACK = [
   { value: "247", label: "생성된 캠페인" },
-  { value: "+38%", label: "평균 CTR 상승" },
+  { value: "38%", label: "평균 CTR" },
   { value: "2.3분", label: "평균 생성 시간" },
 ];
 
@@ -107,9 +108,30 @@ function AnimatedOrb() {
 }
 
 export default function LandingPage() {
+  const [stats, setStats] = useState(STATS_FALLBACK);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/stats`)
+      .then((r) => r.json())
+      .then((data) => {
+        setStats([
+          { value: String(data.campaign_count ?? 247), label: "생성된 캠페인" },
+          {
+            value: data.avg_ctr != null ? `${data.avg_ctr}%` : "38%",
+            label: "평균 CTR",
+          },
+          {
+            value: data.avg_generation_time_minutes != null ? `${data.avg_generation_time_minutes}분` : "2.3분",
+            label: "평균 생성 시간",
+          },
+        ]);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <main className="min-h-screen overflow-hidden bg-[var(--bg-primary)] text-white">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(18,55,110,0.22),_transparent_34%),radial-gradient(circle_at_bottom,_rgba(19,100,254,0.12),_transparent_24%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(18,55,110,0.22),_transparent_34%)]" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1600px] flex-col px-6 pb-12 pt-8 sm:px-10 lg:px-12">
         <header className="flex items-start justify-between">
@@ -181,11 +203,11 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-12 flex w-full max-w-[640px] flex-col items-center justify-center gap-6 sm:flex-row sm:gap-0">
-            {STATS.map((stat, index) => (
+            {stats.map((stat, index) => (
               <div
                 key={stat.label}
                 className={`flex min-w-[150px] flex-col items-center px-6 text-center ${
-                  index < STATS.length - 1 ? "sm:border-r sm:border-white/24" : ""
+                  index < stats.length - 1 ? "sm:border-r sm:border-white/24" : ""
                 }`}
               >
                 <span className="text-[32px] font-light tracking-[-0.05em] text-white sm:text-[42px]">

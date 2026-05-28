@@ -32,7 +32,7 @@ export default function RecommendedCopies({ items, isLoading = false }: Props) {
             key={item.preset_id}
             className="rounded-[22px] border border-[var(--border)] bg-[#1d1d1c] px-6 py-5"
           >
-            <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="mb-3 space-y-2">
               <div className="flex items-center gap-2">
                 <span
                   className="inline-flex h-3 w-3 rounded-full"
@@ -43,9 +43,9 @@ export default function RecommendedCopies({ items, isLoading = false }: Props) {
                 </p>
               </div>
               {item.copy_tone && (
-                <span className="rounded-full border border-[var(--border)] px-3 py-1 text-[11px] text-[var(--text-secondary)]">
+                <p className="text-[11px] text-[var(--text-secondary)]">
                   {item.copy_tone}
-                </span>
+                </p>
               )}
             </div>
             <div className="rounded-2xl bg-[var(--bg-card)] px-4 py-3 text-[14px] leading-relaxed text-[var(--text-primary)]">
