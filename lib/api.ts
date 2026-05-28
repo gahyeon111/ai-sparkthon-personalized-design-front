@@ -10,8 +10,23 @@ import type {
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+const APP_ACCESS_TOKEN = process.env.NEXT_PUBLIC_APP_ACCESS_TOKEN ?? "";
 const REQUEST_TIMEOUT_MS = 180_000;
 const MAX_RETRIES = 2;
+
+export function getApiHeaders(
+  extraHeaders?: HeadersInit,
+  options?: { includeJsonContentType?: boolean }
+): HeadersInit {
+  const headers = new Headers(extraHeaders);
+  if (options?.includeJsonContentType ?? true) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (APP_ACCESS_TOKEN) {
+    headers.set("x-app-token", APP_ACCESS_TOKEN);
+  }
+  return headers;
+}
 
 /** Backend static cache or ComfyUI URL → browser-loadable URL */
 export function resolveImageUrl(url: string | null | undefined): string {
@@ -67,7 +82,7 @@ async function request<T>(
 
     try {
       const res = await fetch(`${API_BASE_URL}${path}`, {
-        headers: { "Content-Type": "application/json" },
+        headers: getApiHeaders(options?.headers),
         ...options,
         signal: controller.signal,
       });
@@ -260,6 +275,7 @@ export async function uploadEntityLogo(
   formData.append("file", file);
   const res = await fetch(`${API_BASE_URL}/api/entities/upload-logo`, {
     method: "POST",
+    headers: getApiHeaders(undefined, { includeJsonContentType: false }),
     body: formData,
   });
   if (!res.ok) {
@@ -281,6 +297,7 @@ export async function uploadReferenceImage(
   formData.append("file", file);
   const res = await fetch(`${API_BASE_URL}/api/chat/upload-reference`, {
     method: "POST",
+    headers: getApiHeaders(undefined, { includeJsonContentType: false }),
     body: formData,
   });
   if (!res.ok) {

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
-import { API_BASE_URL } from "@/lib/api";
+import { API_BASE_URL, getApiHeaders } from "@/lib/api";
 
 const FEATURE_ITEMS = [
   {
@@ -113,7 +113,9 @@ export default function LandingPage() {
   const [stats, setStats] = useState(STATS_FALLBACK);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/stats`)
+    fetch(`${API_BASE_URL}/api/stats`, {
+      headers: getApiHeaders(),
+    })
       .then((r) => r.json())
       .then((data) => {
         setStats([
