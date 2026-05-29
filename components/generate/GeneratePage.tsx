@@ -9,7 +9,7 @@ import PresetCombinations from "./PresetCombinations";
 import RecommendedCopies from "./RecommendedCopies";
 import ImageGrid from "./ImageGrid";
 import ChatMessage from "./ChatMessage";
-import ChatInput, { type AttachedImage } from "./ChatInput";
+import ChatInput, { type AttachedImage, type ChatInputHandle } from "./ChatInput";
 import ResizableChatLayout from "./ResizableChatLayout";
 import {
   createChatSession,
@@ -37,6 +37,7 @@ interface DisplayMessage {
   showFinalizeButton?: boolean;
   channelOptions?: string[];
   quick_replies?: string[];
+  attachmentPreviews?: { previewUrl: string; label: string }[];
 }
 
 interface EditPollState {
@@ -85,6 +86,7 @@ export default function GeneratePage() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const chatInputRef = useRef<ChatInputHandle>(null);
 
   // 채팅 스크롤 하단 고정
   const scrollToBottom = useCallback(() => {
@@ -265,6 +267,14 @@ export default function GeneratePage() {
         id: `u-${Date.now()}`,
         role: "user",
         content: message + attachmentLabel,
+        attachmentPreviews: attachments?.map((a) => ({
+          previewUrl: a.previewUrl,
+          label: a.usage_type === "STYLE_REFERENCE" ? "스타일 참고"
+            : a.usage_type === "LOGO_EXTRACTION" ? "로고 추출"
+            : a.usage_type === "COMPOSITION_REFERENCE" ? "구도 참고"
+            : a.usage_type === "COLOR_REFERENCE" ? "색감 참고"
+            : "이미지 합성",
+        })),
       };
       const loadingMsg: DisplayMessage = {
         id: `l-${Date.now()}`,
@@ -458,13 +468,18 @@ export default function GeneratePage() {
   );
 
   // 채널 버튼 클릭 → 채널명을 메시지로 전송 (w/h는 CHANNEL_SIZES에서 결정)
+  // ref_image_query 단계에서 "파일 업로드" 클릭 시 파일 입력창 직접 열기
   const handleChannelSelect = useCallback(
     (channelName: string) => {
+      if (step === "ref_image_query" && channelName === "파일 업로드") {
+        chatInputRef.current?.openFilePicker();
+        return;
+      }
       const size = CHANNEL_SIZES[channelName as keyof typeof CHANNEL_SIZES];
       if (size) setChannel(channelName as keyof typeof CHANNEL_SIZES);
       handleSend(channelName);
     },
-    [handleSend]
+    [handleSend, step]
   );
 
   const progressIndex = chatStepToProgressIndex(step);
@@ -618,6 +633,7 @@ export default function GeneratePage() {
                 channelOptions={msg.channelOptions}
                 onQuickReply={handleChannelSelect}
                 quick_replies={msg.quick_replies}
+                attachmentPreviews={msg.attachmentPreviews}
               />
             ))}
             <div ref={messagesEndRef} />
@@ -625,6 +641,7 @@ export default function GeneratePage() {
 
           {/* 입력 영역 */}
           <ChatInput
+            ref={chatInputRef}
             onSend={handleSend}
             disabled={isLoading || isInitializing || step === "done"}
             placeholder={

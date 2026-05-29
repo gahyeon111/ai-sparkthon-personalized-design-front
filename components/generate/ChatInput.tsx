@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useImperativeHandle, forwardRef } from "react";
 import { ArrowUp, Paperclip, X, Image as ImageIcon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -48,7 +48,11 @@ interface Props {
   onExampleSelect?: (example: string) => void;
 }
 
-export default function ChatInput({
+export interface ChatInputHandle {
+  openFilePicker: () => void;
+}
+
+export default forwardRef<ChatInputHandle, Props>(function ChatInput({
   onSend,
   disabled,
   placeholder = "메시지를 입력하세요",
@@ -56,13 +60,18 @@ export default function ChatInput({
   step,
   campaignExamples = [],
   onExampleSelect,
-}: Props) {
+}: Props, ref: React.Ref<ChatInputHandle>) {
   const [value, setValue] = useState("");
   const [attachments, setAttachments] = useState<AttachedImage[]>([]);
   const [showUsagePicker, setShowUsagePicker] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingPreviewUrl, setPendingPreviewUrl] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    openFilePicker: () => fileInputRef.current?.click(),
+  }));
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -78,13 +87,14 @@ export default function ChatInput({
     // 이미지 첨부 후 usage 선택 없이 텍스트로 입력하는 경우:
     // 텍스트를 그대로 전송하고, pendingFile은 STYLE_REFERENCE 기본값으로 포함
     if (pendingFile && showUsagePicker) {
-      const previewUrl = URL.createObjectURL(pendingFile);
       const inferredUsage = inferUsageFromText(trimmed);
+      const previewUrl = pendingPreviewUrl ?? URL.createObjectURL(pendingFile);
       const newAttachment: AttachedImage = { file: pendingFile, previewUrl, usage_type: inferredUsage };
       onSend(trimmed, [...attachments, newAttachment]);
       setValue("");
       setAttachments([]);
       setPendingFile(null);
+      setPendingPreviewUrl(null);
       setShowUsagePicker(false);
       return;
     }
@@ -118,7 +128,10 @@ export default function ChatInput({
         return [{ file, previewUrl, usage_type: "IMAGE_SYNTHESIS" }];
       });
     } else if (attachments.length < maxAttachments) {
+      if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl);
+      const previewUrl = URL.createObjectURL(file);
       setPendingFile(file);
+      setPendingPreviewUrl(previewUrl);
       setShowUsagePicker(true);
     }
     // reset input so same file can be re-selected
@@ -127,16 +140,16 @@ export default function ChatInput({
 
   const confirmUsage = (usage: RefImageUsage) => {
     if (!pendingFile) return;
-    const previewUrl = URL.createObjectURL(pendingFile);
+    const previewUrl = pendingPreviewUrl ?? URL.createObjectURL(pendingFile);
     const newAttachment: AttachedImage = { file: pendingFile, previewUrl, usage_type: usage };
     const currentText = value.trim();
-    // 텍스트가 이미 있으면 이미지와 함께 즉시 전송, 없으면 usage 라벨을 기본 메시지로 전송
     const messageToSend =
       currentText || USAGE_OPTIONS.find((o) => o.value === usage)?.label || "참조 이미지";
     onSend(messageToSend, [...attachments, newAttachment]);
     setValue("");
     setAttachments([]);
     setPendingFile(null);
+    setPendingPreviewUrl(null);
     setShowUsagePicker(false);
   };
 
@@ -225,14 +238,22 @@ export default function ChatInput({
             exit={{ opacity: 0, y: 6 }}
             className="mb-3 rounded-[24px] border border-[#41413d] bg-[#12171e] p-4"
           >
-            <div className="flex items-center gap-2 mb-2 min-w-0">
-              <ImageIcon size={13} className="shrink-0 text-[var(--text-secondary)]" />
-              <span className="text-xs text-[var(--text-secondary)] min-w-0 flex items-center gap-1 flex-wrap">
-                <span className="text-[var(--text-primary)] font-medium max-w-[160px] truncate block" title={pendingFile.name}>
+            <div className="flex items-start gap-3 mb-2 min-w-0">
+              {/* 썸네일 */}
+              {pendingPreviewUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={pendingPreviewUrl}
+                  alt="첨부 이미지"
+                  className="w-12 h-12 rounded-lg object-cover border border-[var(--border)] shrink-0"
+                />
+              )}
+              <div className="flex flex-col justify-center gap-0.5 min-w-0">
+                <span className="text-[var(--text-primary)] font-medium text-xs max-w-[160px] truncate" title={pendingFile.name}>
                   {pendingFile.name}
                 </span>
-                <span className="shrink-0">— 이미지 활용 방식을 선택하세요</span>
-              </span>
+                <span className="text-[11px] text-[var(--text-secondary)]">이미지 활용 방식을 선택하세요</span>
+              </div>
             </div>
             <div className="flex gap-2 flex-wrap">
               {PICKER_USAGE_OPTIONS.map((opt) => (
@@ -245,7 +266,7 @@ export default function ChatInput({
                 </button>
               ))}
               <button
-                onClick={() => { setPendingFile(null); setShowUsagePicker(false); }}
+                onClick={() => { if (pendingPreviewUrl) URL.revokeObjectURL(pendingPreviewUrl); setPendingFile(null); setPendingPreviewUrl(null); setShowUsagePicker(false); }}
                 className="px-3 py-1.5 rounded-lg text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
               >
                 취소
@@ -307,4 +328,4 @@ export default function ChatInput({
       </div>
     </div>
   );
-}
+});

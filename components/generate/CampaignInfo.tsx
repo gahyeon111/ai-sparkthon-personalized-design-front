@@ -36,7 +36,7 @@ export default function CampaignInfo({ campaignId, campaignText }: Props) {
           </span>
 
           <span className="text-[var(--text-secondary)]">대상 고객</span>
-          <span className="text-[var(--text-primary)]">18,500명</span>
+          <span className="text-[var(--text-primary)]">7,500,000명</span>
         </div>
       </div>
     </motion.div>

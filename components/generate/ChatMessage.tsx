@@ -16,6 +16,7 @@ interface Props {
   channelOptions?: string[];
   onQuickReply?: (text: string) => void;
   quick_replies?: string[];
+  attachmentPreviews?: { previewUrl: string; label: string }[];
 }
 
 export default function ChatMessage({
@@ -27,6 +28,7 @@ export default function ChatMessage({
   channelOptions,
   onQuickReply,
   quick_replies,
+  attachmentPreviews,
 }: Props) {
   const isAssistant = role === "assistant";
   const [selectedReply, setSelectedReply] = useState<string | null>(null);
@@ -56,6 +58,25 @@ export default function ChatMessage({
       )}
 
       <div className={`flex flex-col gap-3 ${isAssistant ? "max-w-[84%] items-start" : "max-w-[76%] items-end self-end"}`}>
+        {/* 유저 첨부 이미지 썸네일 — 말풍선 위에 표시 */}
+        {!isAssistant && attachmentPreviews && attachmentPreviews.length > 0 && (
+          <div className="flex flex-wrap gap-2 justify-end mb-1.5">
+            {attachmentPreviews.map((att, idx) => (
+              <div key={idx} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={att.previewUrl}
+                  alt={att.label}
+                  className="w-16 h-16 rounded-xl object-cover border border-white/20"
+                />
+                <span className="absolute bottom-0 left-0 right-0 text-[9px] text-center bg-black/60 text-white rounded-b-xl py-0.5 px-1 truncate">
+                  {att.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* 말풍선 */}
         <div
           className={`text-[13px] font-medium leading-relaxed ${
