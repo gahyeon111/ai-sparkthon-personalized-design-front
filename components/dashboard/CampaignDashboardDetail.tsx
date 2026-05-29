@@ -414,7 +414,7 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
               </button>
             </div>
 
-              <div className="max-h-[calc(100vh-180px)] overflow-y-auto px-7 py-6 pb-28 sm:pb-6" style={{ paddingBottom: 'max(7rem, calc(1.5rem + env(safe-area-inset-bottom)))' }}>
+              <div className="max-h-[calc(100dvh-180px)] overflow-y-auto px-7 py-6 pb-28 sm:pb-6" style={{ paddingBottom: 'max(7rem, calc(1.5rem + env(safe-area-inset-bottom)))' }}>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {AXIS1_TYPES.map((type) => {
                     const image = orderedImages.find((item) => getAxis1Id(item) === type.id) ?? null;

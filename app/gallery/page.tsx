@@ -43,7 +43,7 @@ function ImageModal({ img, onClose }: { img: GalleryImage; onClose: () => void }
       className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-sm px-6 sm:items-center sm:p-6 md:left-[280px]"
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
-      <div className="relative flex w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#141412] shadow-2xl mt-6 max-h-[calc(100vh-6rem-1rem)] sm:mt-0 sm:max-h-[90vh] sm:flex-row">
+      <div className="relative flex w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#141412] shadow-2xl mt-6 max-h-[calc(100dvh-6rem-1rem)] sm:mt-0 sm:max-h-[90dvh] sm:flex-row">
 
         {/* 닫기 버튼 */}
         <button

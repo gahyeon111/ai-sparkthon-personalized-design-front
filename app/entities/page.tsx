@@ -71,7 +71,7 @@ function EntityDetailModal({
       className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-sm px-6 sm:items-center sm:p-6 md:left-[280px]"
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
-      <div className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#141412] shadow-2xl mt-6 max-h-[calc(100vh-6rem-1rem)] sm:mt-0 sm:max-h-[90vh] sm:flex-row">
+      <div className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#141412] shadow-2xl mt-6 max-h-[calc(100dvh-6rem-1rem)] sm:mt-0 sm:max-h-[90dvh] sm:flex-row">
 
         {/* 닫기 */}
         <button
@@ -432,7 +432,7 @@ function AddModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-sm px-6 sm:items-center sm:p-6 md:left-[280px]">
-      <div className="relative w-full max-w-lg rounded-[24px] border border-white/10 bg-[#141412] p-6 shadow-2xl mt-6 max-h-[calc(100vh-6rem-1rem)] overflow-y-auto sm:mt-0 sm:max-h-[90vh]" style={{ paddingBottom: 'max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom)))' }}>
+      <div className="relative w-full max-w-lg rounded-[24px] border border-white/10 bg-[#141412] p-6 shadow-2xl mt-6 max-h-[calc(100dvh-6rem-1rem)] overflow-y-auto sm:mt-0 sm:max-h-[90dvh]" style={{ paddingBottom: 'max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom)))' }}>
         <button
           onClick={onClose}
           className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
