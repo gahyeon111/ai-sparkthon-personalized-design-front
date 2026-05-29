@@ -68,10 +68,10 @@ function EntityDetailModal({
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6 md:left-[280px]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6 pb-24 sm:pb-6 md:left-[280px]"
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
-      <div className="relative flex w-full max-w-4xl max-h-[90vh] rounded-[28px] overflow-hidden border border-white/10 bg-[#141412] shadow-2xl">
+      <div className="relative flex w-full max-w-4xl max-h-[90vh] flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#141412] shadow-2xl sm:flex-row">
 
         {/* 닫기 */}
         <button
@@ -81,8 +81,8 @@ function EntityDetailModal({
           <X size={15} />
         </button>
 
-        {/* 좌: 로고 / 시각 영역 */}
-        <div className="flex flex-1 items-center justify-center bg-[#e8e8e6] min-w-0">
+        {/* 상단(모바일) / 좌(PC): 로고 / 시각 영역 */}
+        <div className="flex h-[200px] items-center justify-center bg-[#e8e8e6] sm:h-auto sm:flex-1 sm:min-w-0">
           {!isBenefit && logoSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -94,8 +94,8 @@ function EntityDetailModal({
             />
           ) : (
             <div className="flex flex-col items-center justify-center gap-4 px-10 text-center">
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[#d0d0ce]">
-                <span className="text-[36px] font-bold text-[#888]">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#d0d0ce] sm:h-24 sm:w-24">
+                <span className="text-[30px] font-bold text-[#888] sm:text-[36px]">
                   {(item.name_kr || item.name_en || "?").charAt(0).toUpperCase()}
                 </span>
               </div>
@@ -106,8 +106,8 @@ function EntityDetailModal({
           )}
         </div>
 
-        {/* 우: 정보 패널 */}
-        <div className="flex w-[340px] shrink-0 flex-col overflow-y-auto border-l border-white/8">
+        {/* 하단(모바일) / 우(PC): 정보 패널 */}
+        <div className="flex flex-1 flex-col overflow-y-auto border-t border-white/8 sm:w-[340px] sm:flex-none sm:border-l sm:border-t-0">
 
           {/* 헤더 */}
           <div className="px-6 pt-6 pb-5 border-b border-white/8">
@@ -431,7 +431,7 @@ function AddModal({
     ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6 md:left-[280px]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6 pb-24 sm:pb-6 md:left-[280px]">
       <div className="relative w-full max-w-lg rounded-[24px] border border-white/10 bg-[#141412] p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
@@ -693,7 +693,7 @@ export default function EntitiesPage() {
       {/* FAB */}
       <button
         onClick={() => setShowAdd(true)}
-        className="fixed bottom-8 right-8 flex items-center gap-3 rounded-full bg-[var(--bg-card)] border border-white/15 px-6 py-3.5 text-[14px] font-medium text-white shadow-xl transition-all hover:bg-[var(--border)] hover:border-white/30 active:scale-95"
+        className="fixed bottom-24 right-6 flex items-center gap-3 rounded-full bg-[var(--bg-card)] border border-white/15 px-6 py-3.5 text-[14px] font-medium text-white shadow-xl transition-all hover:bg-[var(--border)] hover:border-white/30 active:scale-95 sm:bottom-8 sm:right-8"
       >
         <Plus size={18} />
         추가하기

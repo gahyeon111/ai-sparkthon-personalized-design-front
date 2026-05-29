@@ -190,7 +190,7 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
   return (
     <div className="h-full overflow-y-auto bg-[#0B1016]">
       <div className="mx-auto max-w-[1420px] px-8 py-7">
-        <div className="mb-10 flex items-start justify-between gap-6">
+        <div className="mb-10 flex items-start justify-between gap-3">
           <div>
             <button
               onClick={() => {
@@ -200,7 +200,7 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
                 }
                 router.push("/dashboard");
               }}
-              className="inline-flex items-center gap-2 rounded-full border border-white/12 px-5 py-3 text-sm text-white/80 transition-colors hover:text-white"
+              className="inline-flex items-center gap-2 rounded-full border border-white/12 px-4 py-2.5 text-sm text-white/80 transition-colors hover:text-white sm:px-5 sm:py-3"
             >
               <ArrowLeft size={16} />
               뒤로가기
@@ -208,23 +208,23 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
             <p className="mt-6 text-[13px] uppercase tracking-[0.24em] text-[var(--text-secondary)]">
               Campaign Dashboard
             </p>
-            <h1 className="mt-3 text-[42px] font-semibold leading-none tracking-[-0.04em] text-white">
+            <h1 className="mt-3 text-[28px] font-semibold leading-none tracking-[-0.04em] text-white sm:text-[42px]">
               세부 캠페인 내용
             </h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <button
               onClick={() => {
                 loadCampaign();
                 loadSimulation(true);
               }}
               disabled={campaignLoading || simulationLoading}
-              className="flex items-center gap-2 rounded-full border border-white/15 px-5 py-3 text-sm text-white/80 transition-colors hover:text-white disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-2.5 text-sm text-white/80 transition-colors hover:text-white disabled:opacity-40 sm:gap-2 sm:px-5 sm:py-3"
             >
               <RefreshCw size={14} className={campaignLoading || simulationLoading ? "animate-spin" : ""} />
-              새로고침
+              <span className="hidden sm:inline">새로고침</span>
             </button>
-            <button className="rounded-full bg-[#E8E8E6] px-6 py-3 text-sm font-medium text-[#131313]">
+            <button className="rounded-full bg-[#E8E8E6] px-4 py-2.5 text-sm font-medium text-[#131313] sm:px-6 sm:py-3">
               C2012531
             </button>
           </div>
@@ -286,13 +286,21 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
               </div>
 
               <div className="mt-5 grid gap-4 xl:grid-cols-[1.25fr_0.95fr]">
-                <div className="rounded-[30px] bg-[#575757] px-5 py-5 text-white">
+                <div className="order-2 rounded-[30px] bg-[#575757] px-5 py-5 text-white xl:order-1">
                   <div className="mb-5 flex items-center justify-between">
                     <h3 className="text-[17px] font-semibold">이미지별 매칭 현황</h3>
                     <span className="text-xs text-white/65">
                       {simulationLoading ? "시뮬레이션 계산 중" : simulation?.simulation_version ?? "시뮬레이션"}
                     </span>
                   </div>
+                  {/* 모바일 헤더 */}
+                  <div className="grid grid-cols-[72px_1fr_1fr_64px] gap-3 border-b border-white/12 pb-3 text-[11px] text-white/65 md:hidden">
+                    <span>유형</span>
+                    <span>예상 클릭 수</span>
+                    <span>CTR</span>
+                    <span>상태</span>
+                  </div>
+                  {/* PC 헤더 */}
                   <div className="hidden grid-cols-[88px_1.5fr_0.78fr_0.5fr_0.56fr] gap-3 border-b border-white/12 pb-3 text-[11px] text-white/65 md:grid">
                     <span>유형</span>
                     <span>고객군</span>
@@ -304,12 +312,12 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
                     {matchingRows.map((row) => (
                       <div
                         key={row.type.id}
-                        className="grid gap-3 rounded-[20px] bg-black/10 px-4 py-3.5 md:grid-cols-[88px_1.5fr_0.78fr_0.5fr_0.56fr] md:items-center"
+                        className="grid grid-cols-[72px_1fr_1fr_64px] items-center gap-3 rounded-[20px] bg-black/10 px-4 py-3.5 md:grid-cols-[88px_1.5fr_0.78fr_0.5fr_0.56fr]"
                       >
                         <div className="inline-flex w-fit rounded-full border border-white/45 px-3.5 py-1.5 text-[18px] font-semibold">
                           {row.type.code}
                         </div>
-                        <div>
+                        <div className="hidden md:block">
                           <p className="text-[16px] font-medium leading-snug">{row.type.name}</p>
                           <p className="mt-0.5 text-[11px] text-white/65">{row.type.englishName}</p>
                         </div>
@@ -323,7 +331,7 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
                   </div>
                 </div>
 
-                <div className="rounded-[30px] bg-[#F3F3F0] px-6 py-7 text-[#131313] md:px-8 md:py-8">
+                <div className="order-1 rounded-[30px] bg-[#F3F3F0] px-6 py-7 text-[#131313] md:px-8 md:py-8 xl:order-2">
                   <h3 className="text-[17px] font-semibold">고객별 특성</h3>
 
                   <div className="mt-4 flex flex-wrap gap-1.5">
@@ -408,7 +416,7 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
 
       {isImageModalOpen ? (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm md:left-[280px]">
-          <div className="flex h-full items-center justify-center px-6 py-8">
+          <div className="flex h-full items-center justify-center px-6 py-8 pb-24 sm:pb-8">
             <div className="max-h-full w-full max-w-[1420px] overflow-hidden rounded-[32px] border border-white/10 bg-[#121922] shadow-[0_32px_80px_rgba(0,0,0,0.45)]">
             <div className="flex items-center justify-between border-b border-white/10 px-7 py-5">
               <div>

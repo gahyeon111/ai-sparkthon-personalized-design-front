@@ -40,10 +40,10 @@ function ImageModal({ img, onClose }: { img: GalleryImage; onClose: () => void }
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6 md:left-[280px]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6 pb-24 sm:pb-6 md:left-[280px]"
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
-      <div className="relative flex w-full max-w-5xl max-h-[90vh] rounded-[28px] overflow-hidden border border-white/10 bg-[#141412] shadow-2xl">
+      <div className="relative flex w-full max-w-5xl max-h-[90vh] flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#141412] shadow-2xl sm:flex-row">
 
         {/* 닫기 버튼 */}
         <button
@@ -53,18 +53,18 @@ function ImageModal({ img, onClose }: { img: GalleryImage; onClose: () => void }
           <X size={15} />
         </button>
 
-        {/* 좌: 이미지 */}
-        <div className="flex flex-1 items-center justify-center bg-[#0e0e0c] min-w-0">
+        {/* 상단(모바일) / 좌(PC): 이미지 */}
+        <div className="flex h-[220px] items-center justify-center bg-[#0e0e0c] sm:h-auto sm:flex-1 sm:min-w-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={src}
             alt={img.tag}
-            className="max-h-[90vh] max-w-full object-contain"
+            className="max-h-full max-w-full object-contain"
           />
         </div>
 
-        {/* 우: 정보 패널 */}
-        <div className="flex w-[320px] shrink-0 flex-col gap-0 overflow-y-auto border-l border-white/8">
+        {/* 하단(모바일) / 우(PC): 정보 패널 */}
+        <div className="flex flex-1 flex-col gap-0 overflow-y-auto border-t border-white/8 sm:w-[320px] sm:flex-none sm:border-l sm:border-t-0">
 
           {/* 태그 헤더 */}
           <div className="px-6 pt-6 pb-5 border-b border-white/8">
@@ -270,7 +270,7 @@ export default function GalleryPage() {
           )}
 
           {loading ? (
-            <div className="grid grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-5">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="rounded-[20px] overflow-hidden border border-white/8 bg-white/4">
                   <div className="animate-pulse bg-[#1e1e1c]" style={{ aspectRatio: "1 / 1" }} />
@@ -292,7 +292,7 @@ export default function GalleryPage() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-5">
               {images.map((img) => (
                 <ImageCard key={img.id} img={img} onClick={() => setSelected(img)} />
               ))}
