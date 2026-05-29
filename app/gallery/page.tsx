@@ -171,7 +171,7 @@ function ImageCard({ img, onClick }: { img: GalleryImage; onClick: () => void })
 
 export default function GalleryPage() {
   const [images, setImages] = useState<GalleryImage[]>([]);
-  const [sort, setSort] = useState<SortValue>("ctr_desc");
+  const [sort, setSort] = useState<SortValue>("newest");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortOpen, setSortOpen] = useState(false);
