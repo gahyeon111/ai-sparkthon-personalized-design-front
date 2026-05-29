@@ -40,10 +40,10 @@ function ImageModal({ img, onClose }: { img: GalleryImage; onClose: () => void }
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6 pb-24 sm:pb-6 md:left-[280px]"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-sm px-6 sm:items-center sm:p-6 md:left-[280px]"
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
-      <div className="relative flex w-full max-w-5xl max-h-[90vh] flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#141412] shadow-2xl sm:flex-row">
+      <div className="relative flex w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#141412] shadow-2xl mt-6 max-h-[calc(100vh-6rem-1rem)] sm:mt-0 sm:max-h-[90vh] sm:flex-row">
 
         {/* 닫기 버튼 */}
         <button
@@ -206,8 +206,8 @@ export default function GalleryPage() {
               <p className="text-[13px] uppercase tracking-[0.24em] text-[var(--text-secondary)]">
                 Image Gallery
               </p>
-              <h1 className="mt-3 text-[42px] font-semibold leading-none tracking-[-0.04em] text-white">
-                캠페인 이미지 전체보기
+              <h1 className="mt-3 text-[42px] font-semibold leading-tight tracking-[-0.04em] text-white">
+                전체 이미지
               </h1>
               <p className="mt-3 text-[14px] text-[var(--text-secondary)]">
                 생성된 이미지를 확인하시고, 어떤 캠페인 프롬프트가 입력되었는지 확인해세요.
@@ -221,19 +221,6 @@ export default function GalleryPage() {
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-3">
-              <button
-                onClick={(e) => { e.stopPropagation(); load(sort); }}
-                disabled={loading}
-                className="flex items-center gap-2 rounded-full border border-white/15 px-5 py-3 text-sm text-white/80 transition-colors hover:text-white disabled:opacity-40"
-              >
-                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-                새로고침
-              </button>
-              <button className="rounded-full bg-[#E8E8E6] px-6 py-3 text-sm font-medium text-[#131313]">
-                C2012531
-              </button>
-            </div>
           </div>
 
           {/* 정렬 컨트롤 */}

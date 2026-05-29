@@ -608,7 +608,7 @@ export default function GeneratePage() {
       </div>
       }
       chat={
-      <div className="flex h-full min-h-0 flex-col pl-4 pr-8 pt-4 pb-3">
+      <div className="flex h-full min-h-0 flex-col px-2 pt-4 pb-3 sm:pl-4 sm:pr-8">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[14px] bg-[#091018] px-4 pt-3 pb-3">
           <div className="shrink-0 px-2 pb-2">
             <h2 className="text-[16px] font-medium text-[var(--accent-lime)]">AI Agent 에게 요청</h2>

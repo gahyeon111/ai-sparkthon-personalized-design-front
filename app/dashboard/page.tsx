@@ -60,19 +60,6 @@ export default function DashboardPage() {
                 대시보드
               </h1>
             </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={loadCampaigns}
-                disabled={loading}
-                className="flex items-center gap-2 rounded-full border border-white/15 px-5 py-3 text-sm text-white/80 transition-colors hover:text-white disabled:opacity-40"
-              >
-                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-                새로고침
-              </button>
-              <button className="rounded-full bg-[#E8E8E6] px-6 py-3 text-sm font-medium text-[#131313]">
-                C2012531
-              </button>
-            </div>
           </div>
 
           {error ? (

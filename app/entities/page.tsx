@@ -68,10 +68,10 @@ function EntityDetailModal({
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6 pb-24 sm:pb-6 md:left-[280px]"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-sm px-6 sm:items-center sm:p-6 md:left-[280px]"
       onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
     >
-      <div className="relative flex w-full max-w-4xl max-h-[90vh] flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#141412] shadow-2xl sm:flex-row">
+      <div className="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-[28px] border border-white/10 bg-[#141412] shadow-2xl mt-6 max-h-[calc(100vh-6rem-1rem)] sm:mt-0 sm:max-h-[90vh] sm:flex-row">
 
         {/* 닫기 */}
         <button
@@ -431,8 +431,8 @@ function AddModal({
     ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6 pb-24 sm:pb-6 md:left-[280px]">
-      <div className="relative w-full max-w-lg rounded-[24px] border border-white/10 bg-[#141412] p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-sm px-6 sm:items-center sm:p-6 md:left-[280px]">
+      <div className="relative w-full max-w-lg rounded-[24px] border border-white/10 bg-[#141412] p-6 shadow-2xl mt-6 max-h-[calc(100vh-6rem-1rem)] overflow-y-auto sm:mt-0 sm:max-h-[90vh]">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
@@ -598,35 +598,22 @@ export default function EntitiesPage() {
               <p className="text-[13px] uppercase tracking-[0.24em] text-[var(--text-secondary)]">
                 Entity Data
               </p>
-              <h1 className="mt-3 text-[42px] font-semibold leading-none tracking-[-0.04em] text-white">
-                브랜드 & 혜택 데이터
+              <h1 className="mt-3 text-[42px] font-semibold leading-tight tracking-[-0.04em] text-white">
+                브랜드 & 혜택
               </h1>
               <p className="mt-3 text-[14px] text-[var(--text-secondary)]">
                 이미지 생성에 사용되는 브랜드, 서비스, 혜택 데이터를 확인하고 항목을 추가합니다.
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-3">
-              <button
-                onClick={() => load(activeTab)}
-                disabled={loading}
-                className="flex items-center gap-2 rounded-full border border-white/15 px-5 py-3 text-sm text-white/80 transition-colors hover:text-white disabled:opacity-40"
-              >
-                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-                새로고침
-              </button>
-              <button className="rounded-full bg-[#E8E8E6] px-6 py-3 text-sm font-medium text-[#131313]">
-                C2012531
-              </button>
-            </div>
           </div>
 
           {/* 탭 */}
-          <div className="mb-7 flex gap-2">
+          <div className="mb-7 flex gap-2 overflow-x-auto [scrollbar-width:none]">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`rounded-full px-5 py-2 text-[14px] font-medium transition-colors ${
+                className={`shrink-0 rounded-full px-5 py-2 text-[14px] font-medium transition-colors ${
                   activeTab === tab.key
                     ? "bg-[var(--accent)] text-white"
                     : "border border-white/15 text-white/60 hover:text-white"
@@ -653,7 +640,7 @@ export default function EntitiesPage() {
 
           {/* 카드 그리드 */}
           {loading ? (
-            <div className="grid grid-cols-3 gap-5 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="rounded-[20px] border border-white/8 overflow-hidden">
                   <div className="animate-pulse bg-[#e8e8e6]/10" style={{ aspectRatio: "4/3" }} />
@@ -669,7 +656,7 @@ export default function EntitiesPage() {
               <p className="text-[var(--text-secondary)]">항목이 없습니다.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-5 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
               {items.map((item) =>
                 isBenefit ? (
                   <BenefitCard

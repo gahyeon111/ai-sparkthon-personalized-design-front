@@ -212,22 +212,6 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
               세부 캠페인 내용
             </h1>
           </div>
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <button
-              onClick={() => {
-                loadCampaign();
-                loadSimulation(true);
-              }}
-              disabled={campaignLoading || simulationLoading}
-              className="flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-2.5 text-sm text-white/80 transition-colors hover:text-white disabled:opacity-40 sm:gap-2 sm:px-5 sm:py-3"
-            >
-              <RefreshCw size={14} className={campaignLoading || simulationLoading ? "animate-spin" : ""} />
-              <span className="hidden sm:inline">새로고침</span>
-            </button>
-            <button className="rounded-full bg-[#E8E8E6] px-4 py-2.5 text-sm font-medium text-[#131313] sm:px-6 sm:py-3">
-              C2012531
-            </button>
-          </div>
         </div>
 
         {error ? (
@@ -294,17 +278,15 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
                     </span>
                   </div>
                   {/* 모바일 헤더 */}
-                  <div className="grid grid-cols-[72px_1fr_1fr_64px] gap-3 border-b border-white/12 pb-3 text-[11px] text-white/65 md:hidden">
+                  <div className="grid grid-cols-[72px_1fr_64px] gap-3 border-b border-white/12 pb-3 text-[11px] text-white/65 md:hidden">
                     <span>유형</span>
-                    <span>예상 클릭 수</span>
                     <span>CTR</span>
                     <span>상태</span>
                   </div>
                   {/* PC 헤더 */}
-                  <div className="hidden grid-cols-[88px_1.5fr_0.78fr_0.5fr_0.56fr] gap-3 border-b border-white/12 pb-3 text-[11px] text-white/65 md:grid">
+                  <div className="hidden grid-cols-[88px_1.5fr_0.5fr_0.56fr] gap-3 border-b border-white/12 pb-3 text-[11px] text-white/65 md:grid">
                     <span>유형</span>
                     <span>고객군</span>
-                    <span>예상 클릭 수</span>
                     <span>CTR</span>
                     <span>상태</span>
                   </div>
@@ -312,7 +294,7 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
                     {matchingRows.map((row) => (
                       <div
                         key={row.type.id}
-                        className="grid grid-cols-[72px_1fr_1fr_64px] items-center gap-3 rounded-[20px] bg-black/10 px-4 py-3.5 md:grid-cols-[88px_1.5fr_0.78fr_0.5fr_0.56fr]"
+                        className="grid grid-cols-[72px_1fr_64px] items-center gap-3 rounded-[20px] bg-black/10 px-4 py-3.5 md:grid-cols-[88px_1.5fr_0.5fr_0.56fr]"
                       >
                         <div className="inline-flex w-fit rounded-full border border-white/45 px-3.5 py-1.5 text-[18px] font-semibold">
                           {row.type.code}
@@ -321,7 +303,6 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
                           <p className="text-[16px] font-medium leading-snug">{row.type.name}</p>
                           <p className="mt-0.5 text-[11px] text-white/65">{row.type.englishName}</p>
                         </div>
-                        <p className="text-[16px] font-medium">{formatCount(row.predictedClicks)}</p>
                         <p className="text-[16px] font-medium">{formatPercent(row.ctr * 100)}</p>
                         <div>
                           <StatusPill status={row.status} />
@@ -433,7 +414,7 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
               </button>
             </div>
 
-              <div className="max-h-[calc(100vh-180px)] overflow-y-auto px-7 py-6">
+              <div className="max-h-[calc(100vh-180px)] overflow-y-auto px-7 py-6 pb-20 sm:pb-6">
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {AXIS1_TYPES.map((type) => {
                     const image = orderedImages.find((item) => getAxis1Id(item) === type.id) ?? null;

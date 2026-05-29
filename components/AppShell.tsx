@@ -15,7 +15,7 @@ const NAV_ITEMS = [
 function BottomNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center border-t border-[var(--border)] bg-[var(--bg-primary)] sm:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center border-t border-[var(--border)] bg-[var(--bg-primary)] lg:hidden">
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon;
         const isActive = pathname.startsWith(item.href);
@@ -43,10 +43,10 @@ function BottomNav() {
 export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-full overflow-hidden bg-[var(--bg-primary)]">
-      <div className="hidden sm:contents">
+      <div className="hidden lg:contents">
         <Sidebar />
       </div>
-      <main className="flex-1 overflow-hidden pb-16 sm:pb-0">{children}</main>
+      <main className="flex-1 overflow-hidden pb-16 lg:pb-0">{children}</main>
       <BottomNav />
     </div>
   );
