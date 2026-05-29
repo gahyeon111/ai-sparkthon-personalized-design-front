@@ -39,13 +39,13 @@ function StatCard({
   };
 
   return (
-    <div className={`rounded-[30px] px-8 py-8 ${toneMap[tone]}`}>
-      <p className="text-[15px] font-semibold">{title}</p>
+    <div className={`rounded-[30px] px-5 py-6 sm:px-8 sm:py-8 ${toneMap[tone]}`}>
+      <p className="text-[13px] font-semibold sm:text-[15px]">{title}</p>
       {description && (
-        <p className={`mt-2 text-[11px] leading-5 ${descToneMap[tone]}`}>{description}</p>
+        <p className={`mt-1.5 text-[10px] leading-5 sm:mt-2 sm:text-[11px] ${descToneMap[tone]}`}>{description}</p>
       )}
-      <div className={description ? "mt-8" : "mt-14"}>
-        <p className="whitespace-nowrap text-[48px] font-semibold leading-none tracking-[-0.04em] md:text-[52px]">
+      <div className={description ? "mt-5 sm:mt-8" : "mt-8 sm:mt-14"}>
+        <p className="whitespace-nowrap text-[32px] font-semibold leading-none tracking-[-0.04em] sm:text-[48px] md:text-[52px]">
           {value}
         </p>
       </div>
@@ -414,7 +414,7 @@ export default function CampaignDashboardDetail({ campaignId }: { campaignId: st
               </button>
             </div>
 
-              <div className="max-h-[calc(100vh-180px)] overflow-y-auto px-7 py-6 pb-20 sm:pb-6">
+              <div className="max-h-[calc(100vh-180px)] overflow-y-auto px-7 py-6 pb-28 sm:pb-6" style={{ paddingBottom: 'max(7rem, calc(1.5rem + env(safe-area-inset-bottom)))' }}>
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {AXIS1_TYPES.map((type) => {
                     const image = orderedImages.find((item) => getAxis1Id(item) === type.id) ?? null;

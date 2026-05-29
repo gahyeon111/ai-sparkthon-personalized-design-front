@@ -107,7 +107,7 @@ function EntityDetailModal({
         </div>
 
         {/* 하단(모바일) / 우(PC): 정보 패널 */}
-        <div className="flex flex-1 flex-col overflow-y-auto border-t border-white/8 sm:w-[340px] sm:flex-none sm:border-l sm:border-t-0">
+        <div className="flex flex-1 flex-col overflow-y-auto border-t border-white/8 sm:w-[340px] sm:flex-none sm:border-l sm:border-t-0" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
 
           {/* 헤더 */}
           <div className="px-6 pt-6 pb-5 border-b border-white/8">
@@ -212,7 +212,7 @@ function EntityDetailModal({
 
           {/* 삭제 버튼 (사용자 추가 항목만) */}
           {item.source === "user" && onDelete && (
-            <div className="px-6 pb-6 pt-2">
+            <div className="px-6 pb-6 pt-2 lg:pb-6" style={{ paddingBottom: 'max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom)))' }}>
               <button
                 onClick={onDelete}
                 className="flex w-full items-center justify-center gap-2 rounded-full border border-red-400/20 py-2.5 text-sm text-red-400/70 transition-colors hover:border-red-400/40 hover:text-red-400"
@@ -432,7 +432,7 @@ function AddModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 backdrop-blur-sm px-6 sm:items-center sm:p-6 md:left-[280px]">
-      <div className="relative w-full max-w-lg rounded-[24px] border border-white/10 bg-[#141412] p-6 shadow-2xl mt-6 max-h-[calc(100vh-6rem-1rem)] overflow-y-auto sm:mt-0 sm:max-h-[90vh]">
+      <div className="relative w-full max-w-lg rounded-[24px] border border-white/10 bg-[#141412] p-6 shadow-2xl mt-6 max-h-[calc(100vh-6rem-1rem)] overflow-y-auto sm:mt-0 sm:max-h-[90vh]" style={{ paddingBottom: 'max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom)))' }}>
         <button
           onClick={onClose}
           className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"

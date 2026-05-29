@@ -64,7 +64,7 @@ function ImageModal({ img, onClose }: { img: GalleryImage; onClose: () => void }
         </div>
 
         {/* 하단(모바일) / 우(PC): 정보 패널 */}
-        <div className="flex flex-1 flex-col gap-0 overflow-y-auto border-t border-white/8 sm:w-[320px] sm:flex-none sm:border-l sm:border-t-0">
+        <div className="flex flex-1 flex-col gap-0 overflow-y-auto border-t border-white/8 sm:w-[320px] sm:flex-none sm:border-l sm:border-t-0" style={{ paddingBottom: 'max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom)))' }}>
 
           {/* 태그 헤더 */}
           <div className="px-6 pt-6 pb-5 border-b border-white/8">

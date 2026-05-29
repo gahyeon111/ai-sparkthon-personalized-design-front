@@ -171,7 +171,7 @@ export default function LandingPage() {
 
           <Link
             href="/generate"
-            className="mt-5 inline-flex w-full max-w-[320px] items-center justify-center gap-2 rounded-full border border-[#d9ff52]/40 bg-[var(--accent-lime)] px-4 py-2 shadow-[0_18px_40px_rgba(198,252,32,0.18)] transition-transform duration-200 hover:scale-[1.01] hover:shadow-[0_24px_50px_rgba(198,252,32,0.22)] sm:mt-8 sm:max-w-[360px] sm:py-2.5"
+            className="mt-5 inline-flex w-full max-w-[220px] items-center justify-center gap-2 rounded-full border border-[#d9ff52]/40 bg-[var(--accent-lime)] px-4 py-2 shadow-[0_18px_40px_rgba(198,252,32,0.18)] transition-transform duration-200 hover:scale-[1.01] hover:shadow-[0_24px_50px_rgba(198,252,32,0.22)] sm:mt-8 sm:max-w-[360px] sm:py-2.5"
           >
             <Image
               src="/home-start-logo.png"
