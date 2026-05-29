@@ -54,7 +54,7 @@ const INIT_MESSAGE: DisplayMessage = {
 const CAMPAIGN_EXAMPLES = [
   "파리바게트에서 결제 시 블루라벨 제품 30% 할인",
   "이마트 최대 5,000원 할인",
-  "주유소 이용 시 L당 50원 1. 할인 + 5% 캐시백",
+  "최대 3만 모니머니 지급",
 ];
 
 export default function GeneratePage() {
